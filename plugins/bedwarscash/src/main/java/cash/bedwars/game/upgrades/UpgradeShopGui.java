@@ -2,6 +2,7 @@ package cash.bedwars.game.upgrades;
 
 import cash.bedwars.game.GameManager;
 import cash.bedwars.game.TeamColor;
+import cash.bedwars.game.shop.ShopInventoryHolder;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -22,7 +23,9 @@ public final class UpgradeShopGui {
     private UpgradeShopGui() {}
 
     public static void open(Player player, UpgradeCatalog catalog, GameManager game, TeamColor team) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, LEGACY.deserialize(catalog.title()));
+        ShopInventoryHolder holder = ShopInventoryHolder.upgrade();
+        Inventory inv = Bukkit.createInventory(holder, SIZE, LEGACY.deserialize(catalog.title()));
+        holder.bind(inv);
         render(inv, catalog, game, team);
         player.openInventory(inv);
     }
@@ -69,12 +72,16 @@ public final class UpgradeShopGui {
         return null;
     }
 
-    public static boolean isUpgradeTitle(String title, UpgradeCatalog catalog) {
-        return title.equals(strip(catalog.title()));
+    public static boolean isUpgradeInventory(Inventory inv) {
+        return inv != null && inv.getHolder() instanceof ShopInventoryHolder h
+                && h.kind() == ShopInventoryHolder.Kind.UPGRADE;
     }
 
-    private static String strip(String s) {
-        return LEGACY.serialize(LEGACY.deserialize(s.replace('&', '§')));
+    public static boolean isUpgradeTitle(String title, UpgradeCatalog catalog) {
+        if (title == null) return false;
+        String plain = title.replaceAll("§.", "");
+        String expected = catalog.title().replaceAll("§.", "");
+        return plain.equals(expected) || plain.contains("Team Upgrades") || plain.contains("Upgrades");
     }
 
     private static String currencyName(Material mat) {

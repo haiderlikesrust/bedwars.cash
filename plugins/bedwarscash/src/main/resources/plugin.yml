@@ -31,7 +31,7 @@ commands:
     permission: bedwarscash.admin
   bwc:
     description: BedWars.cash admin commands.
-    usage: /bwc <setlobby|forcestart|end>
+    usage: /bwc <setlobby|setwait|setbed|forcestart|end>
     permission: bedwarscash.admin
   shop:
     description: Open the in-match item shop.

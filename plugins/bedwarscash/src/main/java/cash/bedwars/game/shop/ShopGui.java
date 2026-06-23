@@ -23,7 +23,9 @@ public final class ShopGui {
     private ShopGui() {}
 
     public static void open(Player player, ShopCatalog catalog, TeamColor team, String categoryId) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, LEGACY.deserialize(catalog.title()));
+        ShopInventoryHolder holder = ShopInventoryHolder.item();
+        Inventory inv = Bukkit.createInventory(holder, SIZE, LEGACY.deserialize(catalog.title()));
+        holder.bind(inv);
         render(inv, catalog, team, categoryId, player);
         player.openInventory(inv);
     }
@@ -98,6 +100,10 @@ public final class ShopGui {
             if (cat.slot() == slot) return cat.id();
         }
         return null;
+    }
+
+    public static boolean isShopInventory(Inventory inv) {
+        return inv != null && inv.getHolder() instanceof ShopInventoryHolder h && h.kind() == ShopInventoryHolder.Kind.ITEM;
     }
 
     public static boolean isShopTitle(String plain, ShopCatalog catalog) {

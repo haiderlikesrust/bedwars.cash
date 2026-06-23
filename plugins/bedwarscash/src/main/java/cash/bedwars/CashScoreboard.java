@@ -45,12 +45,21 @@ public class CashScoreboard {
         );
         obj.setDisplaySlot(DisplaySlot.SIDEBAR);
 
+        boolean inMatch = state.matchActive() || plugin.game().isLive() || plugin.game().isStarting();
+        int matchId = plugin.game().matchId() > 0 ? plugin.game().matchId() : state.matchId();
+        String queueLine = inMatch
+                ? (matchId > 0 ? "§fMatch §7#" + matchId : "§fStatus: §cIn match")
+                : "§fQueue: §a" + state.queueSize() + "§7/§f" + state.queueCapacity();
+        String statusLine = "§fStatus: " + (inMatch && !state.matchActive()
+                ? (plugin.game().isStarting() ? "§eSTARTING" : "§cLIVE")
+                : state.phaseLabel());
+
         String[] lines = {
                 "§8§m─────────────",
                 "§7devnet",
                 " ",
-                "§fQueue: §a" + state.queueSize() + "§7/§f" + state.queueCapacity(),
-                "§fMatch: " + state.phaseLabel(),
+                queueLine,
+                statusLine,
                 "§fReward: §6" + state.rewardPoolSol() + " SOL",
                 "§fBet pool: §6" + state.betPoolSol() + " SOL",
                 " ",

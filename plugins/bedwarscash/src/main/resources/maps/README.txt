@@ -13,9 +13,15 @@ Then in config.yml:
     template: asian_hub
     world: bwc_lobby
 
-Stand on the spawn point in-game and run:  /bwc setlobby
+  arena:
+    mode: custom
+    template: ginko_arena
+    world: bwc_arena
 
-The world is copied into the server folder on first start (server/bwc_lobby/).
-Rebuild the map in the template folder and delete server/bwc_lobby/ to re-import.
+Stand on the spawn point in-game and run:  /bwc setlobby
+For custom arenas, set the countdown area with /bwc setwait and beds with /bwc setbed <team>.
+
+The world is copied into the server folder on first start (server/bwc_lobby/ or server/bwc_arena/).
+Rebuild the map in the template folder and delete the imported world folder to re-import.
 
 Build the hub in creative (WorldEdit, Axiom, etc.), export the world folder, and drop it here.

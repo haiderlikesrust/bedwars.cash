@@ -11,6 +11,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Comparator;
+import java.util.stream.Stream;
 
 /** Copies a map template from plugins/BedWarsCash/maps/<name>/ into the server world folder. */
 public final class MapImporter {
@@ -27,14 +29,60 @@ public final class MapImporter {
     }
 
     public static World loadOrImport(BedWarsCashPlugin plugin, String worldName, String template) throws IOException {
-        File dest = new File(Bukkit.getWorldContainer(), worldName);
-        if (!dest.exists() || !new File(dest, "level.dat").exists()) {
-            plugin.getLogger().info("Importing map template '" + template + "' into world '" + worldName + "'...");
+        File dest = worldDirectory(worldName);
+        File legacy = legacyWorldDirectory(worldName);
+
+        // Paper 26+ migrates legacy folders into world/dimensions — remove duplicate to avoid conflicts.
+        if (!dest.equals(legacy) && legacy.isDirectory()) {
+            plugin.getLogger().info("Removing legacy world folder (Paper uses dimensions): " + legacy.getPath());
+            deleteRecursive(legacy.toPath());
+        }
+
+        if (!new File(dest, "level.dat").exists()) {
+            plugin.getLogger().info("Importing map template '" + template + "' into " + dest.getPath());
+            if (dest.exists()) deleteRecursive(dest.toPath());
             copyDirectory(templateDir(plugin, template).toPath(), dest.toPath());
         }
+
+        deleteIfExists(new File(dest, "session.lock"));
+        deleteIfExists(new File(legacy, "session.lock"));
+
         World world = Bukkit.getWorld(worldName);
         if (world != null) return world;
         return new WorldCreator(worldName).createWorld();
+    }
+
+    /** Paper 26 stores custom worlds under world/dimensions/minecraft/<name>. */
+    public static File worldDirectory(String worldName) {
+        File container = Bukkit.getWorldContainer();
+        File dimensionRoot = new File(container, "world/dimensions/minecraft");
+        if (dimensionRoot.isDirectory()) {
+            return new File(dimensionRoot, worldName);
+        }
+        return legacyWorldDirectory(worldName);
+    }
+
+    private static File legacyWorldDirectory(String worldName) {
+        return new File(Bukkit.getWorldContainer(), worldName);
+    }
+
+    private static void deleteIfExists(File file) {
+        if (file.exists()) file.delete();
+    }
+
+    private static void deleteRecursive(Path root) throws IOException {
+        if (!Files.exists(root)) return;
+        try (Stream<Path> walk = Files.walk(root)) {
+            walk.sorted(Comparator.reverseOrder()).forEach(path -> {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        }
     }
 
     private static void copyDirectory(Path src, Path dest) throws IOException {

@@ -1,13 +1,11 @@
 package cash.bedwars.game;
 
 import cash.bedwars.game.shop.ShopAccess;
-import cash.bedwars.game.shop.ShopGui;
+import cash.bedwars.game.shop.ShopInventoryHolder;
 import cash.bedwars.game.shop.ShopService;
 import cash.bedwars.game.upgrades.UpgradeAccess;
-import cash.bedwars.game.upgrades.UpgradeShopGui;
 import cash.bedwars.game.upgrades.UpgradeShopService;
 import cash.bedwars.world.WorldManager;
-import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,6 +23,7 @@ import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
@@ -98,11 +97,18 @@ public class GameListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event) {
         if (!worlds.isArenaWorld(event.getBlock().getWorld())) return;
-        if (game.isStarting() || (game.isLive() && !game.isActiveFighter(event.getPlayer()))) {
+        if (!game.isLive() || game.isStarting() || !game.isActiveFighter(event.getPlayer())) {
             event.setCancelled(true);
             return;
         }
-        if (game.isLive()) ArenaBlockTracker.untrack(event.getBlock());
+        Material type = event.getBlock().getType();
+        if (type.name().endsWith("_BED")) return;
+
+        if (!ArenaBlockTracker.isTracked(event.getBlock())) {
+            event.setCancelled(true);
+            return;
+        }
+        ArenaBlockTracker.untrack(event.getBlock());
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
@@ -221,28 +227,48 @@ public class GameListener implements Listener {
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onShopClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player p)) return;
-        String title = PlainTextComponentSerializer.plainText().serialize(event.getView().title());
+        ShopInventoryHolder holder = shopHolder(event);
+        if (holder == null) return;
 
-        if (UpgradeShopGui.isUpgradeTitle(title, upgrades.catalog())) {
-            event.setCancelled(true);
-            if (!game.isLive()) return;
-            TeamColor team = game.teamOf(p.getUniqueId());
-            if (team == null) return;
-            upgrades.handleClick(p, team, event.getRawSlot());
-            return;
-        }
-
-        if (!ShopGui.isShopTitle(title, shop.catalog())) return;
         event.setCancelled(true);
+
         if (!game.isLive()) return;
         TeamColor team = game.teamOf(p.getUniqueId());
         if (team == null) return;
+        if (event.getRawSlot() >= event.getView().getTopInventory().getSize()) return;
+
+        if (holder.kind() == ShopInventoryHolder.Kind.UPGRADE) {
+            upgrades.handleClick(p, team, event.getRawSlot());
+            return;
+        }
         shop.handleClick(p, team, event.getRawSlot());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onShopDrag(InventoryDragEvent event) {
+        if (shopHolder(event) != null) {
+            event.setCancelled(true);
+        }
+    }
+
+    private ShopInventoryHolder shopHolder(InventoryClickEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof ShopInventoryHolder h) return h;
+        return null;
+    }
+
+    private ShopInventoryHolder shopHolder(InventoryDragEvent event) {
+        if (event.getView().getTopInventory().getHolder() instanceof ShopInventoryHolder h) return h;
+        return null;
     }
 
     @EventHandler
     public void onShopClose(InventoryCloseEvent event) {
-        if (event.getPlayer() instanceof Player p) shop.close(p);
+        if (!(event.getPlayer() instanceof Player p)) return;
+        if (!(event.getView().getTopInventory().getHolder() instanceof ShopInventoryHolder holder)) return;
+        event.getView().getTopInventory().clear();
+        if (holder.kind() == ShopInventoryHolder.Kind.ITEM) {
+            shop.close(p);
+        }
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

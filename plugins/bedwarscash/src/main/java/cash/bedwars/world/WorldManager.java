@@ -32,6 +32,8 @@ public class WorldManager {
     private Location lobbySpawn;
     private Location arenaWaitingSpawn;
     private boolean customLobby;
+    private boolean customArena;
+    private final Map<TeamColor, BlockFace> teamBedFacings = new EnumMap<>(TeamColor.class);
 
     public WorldManager(BedWarsCashPlugin plugin) {
         this.plugin = plugin;
@@ -39,18 +41,127 @@ public class WorldManager {
 
     public void bootstrap() {
         World lobby = loadLobbyWorld();
-        World arena = ensureVoidWorld(ARENA_WORLD);
         if (lobby != null) {
             applyLobbyRules(lobby);
             if (!customLobby && !isBuilt(lobby)) buildLobby(lobby);
             else loadLobbySpawnFromConfig(lobby);
         }
+        World arena = loadArenaWorld();
         if (arena != null) {
             applyLobbyRules(arena);
-            buildArena(arena);
+            if (customArena) {
+                bindCustomArena(arena);
+            } else {
+                buildArena(arena);
+            }
         }
-        plugin.getLogger().info("Worlds ready: " + lobbyWorldName() + ", " + ARENA_WORLD
-                + (customLobby ? " (custom lobby map)" : ""));
+        plugin.getLogger().info("Worlds ready: " + lobbyWorldName() + ", " + arenaWorldName()
+                + (customLobby ? " (custom lobby)" : "")
+                + (customArena ? " (custom arena: " + plugin.getConfig().getString("arena.template") + ")" : ""));
+    }
+
+    private World loadArenaWorld() {
+        customArena = false;
+        String mode = plugin.getConfig().getString("arena.mode", "procedural");
+        String worldName = arenaWorldName();
+        if ("custom".equalsIgnoreCase(mode)) {
+            String template = plugin.getConfig().getString("arena.template", "");
+            if (MapImporter.templateExists(plugin, template)) {
+                try {
+                    customArena = true;
+                    return MapImporter.loadOrImport(plugin, worldName, template);
+                } catch (IOException e) {
+                    plugin.getLogger().severe("Failed to import arena map '" + template + "': " + e.getMessage());
+                }
+            } else {
+                plugin.getLogger().warning("arena.template '" + template + "' not found — using procedural arena.");
+            }
+        }
+        return ensureVoidWorld(worldName);
+    }
+
+    private String arenaWorldName() {
+        String configured = plugin.getConfig().getString("arena.world", ARENA_WORLD);
+        if (configured == null || configured.isBlank()) return ARENA_WORLD;
+        return configured;
+    }
+
+    private void bindCustomArena(World world) {
+        int radius = plugin.getConfig().getInt("arena.scan-chunk-radius", 20);
+        ArenaMapScanner.Layout layout = ArenaMapScanner.scan(world, radius);
+        applyArenaLayout(world, layout);
+        for (TeamColor team : TeamColor.values()) {
+            if (!teamBeds.containsKey(team)) {
+                plugin.getLogger().warning("Custom arena: could not find " + team.id() + " bed — stand near it and use /bwc setbed "
+                        + team.id().toLowerCase());
+            }
+        }
+    }
+
+    private void applyArenaLayout(World world, ArenaMapScanner.Layout layout) {
+        teamSpawns.clear();
+        teamBeds.clear();
+        teamBedFacings.clear();
+        teamGenerators.clear();
+        globalGenerators.clear();
+        teamSpawns.putAll(layout.spawns());
+        teamBeds.putAll(layout.beds());
+        teamBedFacings.putAll(layout.bedFacings());
+        teamGenerators.putAll(layout.teamGenerators());
+        globalGenerators.putAll(layout.globalGenerators());
+        arenaWaitingSpawn = layout.waitingSpawn();
+        if (plugin.getConfig().contains("arena.waiting.x")) {
+            arenaWaitingSpawn = readArenaWaitingFromConfig(world);
+        }
+    }
+
+    private Location readArenaWaitingFromConfig(World world) {
+        double x = plugin.getConfig().getDouble("arena.waiting.x");
+        double y = plugin.getConfig().getDouble("arena.waiting.y");
+        double z = plugin.getConfig().getDouble("arena.waiting.z");
+        float yaw = (float) plugin.getConfig().getDouble("arena.waiting.yaw");
+        float pitch = (float) plugin.getConfig().getDouble("arena.waiting.pitch");
+        return new Location(world, x, y, z, yaw, pitch);
+    }
+
+    public void saveArenaWaitingHere(org.bukkit.entity.Player p) {
+        Location loc = p.getLocation();
+        plugin.getConfig().set("arena.waiting.x", loc.getX());
+        plugin.getConfig().set("arena.waiting.y", loc.getY());
+        plugin.getConfig().set("arena.waiting.z", loc.getZ());
+        plugin.getConfig().set("arena.waiting.yaw", (double) loc.getYaw());
+        plugin.getConfig().set("arena.waiting.pitch", (double) loc.getPitch());
+        plugin.saveConfig();
+        arenaWaitingSpawn = loc.clone();
+        p.sendMessage("§a[BedWars.cash] Arena waiting spawn updated.");
+    }
+
+    public void saveTeamBedHere(org.bukkit.entity.Player p, TeamColor team) {
+        Block target = p.getTargetBlockExact(6);
+        if (target == null || !target.getType().name().endsWith("_BED")) {
+            p.sendMessage("§cLook at a bed block (within 6 blocks).");
+            return;
+        }
+        BlockFace facing = BlockFace.NORTH;
+        if (target.getBlockData() instanceof Bed bed) {
+            facing = bed.getFacing();
+            if (bed.getPart() == Bed.Part.FOOT) {
+                target = target.getRelative(bed.getFacing());
+            }
+        }
+        Location head = target.getLocation();
+        teamBeds.put(team, head);
+        teamBedFacings.put(team, facing);
+        BlockFace spawnDir = facing.getOppositeFace();
+        Location spawn = head.clone().add(spawnDir.getModX() * 3.5, 1, spawnDir.getModZ() * 3.5);
+        spawn.setYaw(yawForFacing(spawnDir));
+        spawn.setPitch(0f);
+        teamSpawns.put(team, spawn);
+        p.sendMessage("§a[BedWars.cash] " + team.id() + " bed + spawn set.");
+    }
+
+    public boolean usesCustomArena() {
+        return customArena;
     }
 
     private World loadLobbyWorld() {
@@ -194,6 +305,10 @@ public class WorldManager {
     }
 
     public void buildArena(World world) {
+        if (customArena) {
+            prepareCustomArena(world);
+            return;
+        }
         teamSpawns.clear();
         teamBeds.clear();
         teamGenerators.clear();
@@ -216,6 +331,22 @@ public class WorldManager {
             for (int z = -4; z <= 4; z++) world.getBlockAt(x, y + 1, z).setType(Material.QUARTZ_BLOCK);
         }
         arenaWaitingSpawn = new Location(world, 0.5, y + 2, 0.5, 0f, 0f);
+    }
+
+    /** Reset a custom imported map between matches (keep terrain, restore beds). */
+    private void prepareCustomArena(World world) {
+        removeArenaEntities(world);
+        ArenaBlockTracker.clearWorld(world);
+        restoreAllTeamBeds(world);
+    }
+
+    private void restoreAllTeamBeds(World world) {
+        for (TeamColor team : TeamColor.values()) {
+            Location head = teamBeds.get(team);
+            BlockFace facing = teamBedFacings.get(team);
+            if (head == null || facing == null) continue;
+            placeBed(world, team, head.getBlockX(), head.getBlockY(), head.getBlockZ(), facing);
+        }
     }
 
     private void removeArenaEntities(World world) {
@@ -244,6 +375,10 @@ public class WorldManager {
     /** Remove player-placed blocks and entities without rebuilding islands (match end). */
     public void wipeArena(World world) {
         if (world == null) return;
+        if (customArena) {
+            prepareCustomArena(world);
+            return;
+        }
         removeArenaEntities(world);
         clearArenaRegion(world);
     }
@@ -395,7 +530,10 @@ public class WorldManager {
         World w = Bukkit.getWorld(lobbyWorldName());
         return w != null ? w : Bukkit.getWorld(LOBBY_WORLD);
     }
-    public World arenaWorld() { return Bukkit.getWorld(ARENA_WORLD); }
+    public World arenaWorld() {
+        World w = Bukkit.getWorld(arenaWorldName());
+        return w != null ? w : Bukkit.getWorld(ARENA_WORLD);
+    }
     public Location teamSpawn(TeamColor team) { return teamSpawns.get(team); }
     public Location teamBed(TeamColor team) { return teamBeds.get(team); }
 
@@ -509,7 +647,7 @@ public class WorldManager {
     }
 
     public boolean isArenaWorld(World world) {
-        return world != null && ARENA_WORLD.equals(world.getName());
+        return world != null && arenaWorldName().equals(world.getName());
     }
 
     /** Peaceful between matches; normal during live combat so void/PvP deaths work. */

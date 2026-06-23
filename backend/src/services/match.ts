@@ -308,6 +308,7 @@ export async function startMatch(options?: { force?: boolean }): Promise<{ ok: b
   decrementCooldowns();
 
   const teams = assignTeams(players);
+  clearQueue();
   matchEvents.emit('start_match', { matchId: m.id, teams });
   broadcastState();
   broadcastOdds();

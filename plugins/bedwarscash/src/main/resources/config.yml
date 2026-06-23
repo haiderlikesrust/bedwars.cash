@@ -42,7 +42,8 @@ broadcast:
   seconds-per-team: 120
 
 arena:
-  # procedural = built-in islands. To use a custom map, place a world folder under
-  # plugins/BedWarsCash/maps/<name>/ and set template to that name (coming soon).
+  # procedural = built-in islands. custom = import from plugins/BedWarsCash/maps/<template>/
   mode: procedural
-  template: default
+  template: ginko_arena
+  world: bwc_arena
+  scan-chunk-radius: 20

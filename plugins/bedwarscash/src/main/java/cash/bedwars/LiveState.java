@@ -25,6 +25,9 @@ public class LiveState {
             if (m.has("rewardPoolLamports")) {
                 rewardPoolSol = formatSol(m.get("rewardPoolLamports").getAsString());
             }
+            if ("live".equals(phase) || "settling".equals(phase)) {
+                queueSize = 0;
+            }
         } else {
             phase = "lobby";
             matchId = -1;

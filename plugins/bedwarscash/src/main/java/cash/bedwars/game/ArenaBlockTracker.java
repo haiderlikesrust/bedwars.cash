@@ -22,6 +22,10 @@ public final class ArenaBlockTracker {
         PLACED.remove(key(block));
     }
 
+    public static boolean isTracked(Block block) {
+        return PLACED.contains(key(block));
+    }
+
     public static void clearWorld(World world) {
         String prefix = world.getName() + ":";
         Iterator<String> it = PLACED.iterator();
