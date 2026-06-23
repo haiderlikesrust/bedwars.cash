@@ -1,0 +1,42 @@
+shop-title: "&8Team Upgrades"
+
+upgrades:
+  sharpness:
+    name: "&bSharpened Swords"
+    icon: IRON_SWORD
+    slot: 11
+    max-tier: 4
+    currency: DIAMOND
+    costs: [4, 8, 12, 16]
+    lore:
+      - "&7Your team permanently gains"
+      - "&7Sharpness on all swords."
+  protection:
+    name: "&bReinforced Armor"
+    icon: IRON_CHESTPLATE
+    slot: 13
+    max-tier: 4
+    currency: DIAMOND
+    costs: [2, 4, 8, 16]
+    lore:
+      - "&7Your team permanently gains"
+      - "&7Protection on all armor."
+  forge:
+    name: "&bIron Forge"
+    icon: FURNACE
+    slot: 15
+    max-tier: 4
+    currency: GOLD_INGOT
+    costs: [2, 4, 6, 8]
+    lore:
+      - "&7Your team iron & gold generators"
+      - "&7spawn items faster."
+  maniac:
+    name: "&bManiac Miner"
+    icon: GOLDEN_PICKAXE
+    slot: 22
+    max-tier: 2
+    currency: DIAMOND
+    costs: [2, 4]
+    lore:
+      - "&7Gain Haste while on your island."

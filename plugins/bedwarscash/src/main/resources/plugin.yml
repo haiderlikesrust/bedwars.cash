@@ -1,0 +1,44 @@
+name: BedWarsCash
+version: 0.1.0
+main: cash.bedwars.BedWarsCashPlugin
+api-version: '1.21'
+author: BedWars.cash
+description: Solana wagering + parimutuel spectator betting — BedWars.cash hub.
+softdepend: [GrimAC]
+# Paper downloads these at startup and adds them to the plugin classpath
+# (no shading needed).
+libraries:
+  - com.google.code.gson:gson:2.11.0
+commands:
+  setwallet:
+    description: Set your Solana payout wallet (where winnings are sent).
+    usage: /setwallet <solana_address>
+  bwlink:
+    description: Link your bedwars.cash website account using a code.
+    usage: /bwlink <code>
+  bet:
+    description: Place a parimutuel bet on a team.
+    usage: /bet <green|blue|red|yellow> <amountSol>
+  bets:
+    description: Open the in-game betting board.
+    usage: /bets
+  queue:
+    description: Join the ranked match queue.
+    usage: /queue [leave]
+  bwresult:
+    description: (Admin) Report the winning team if no BedWars API hook is active.
+    usage: /bwresult <green|blue|red|yellow>
+    permission: bedwarscash.admin
+  bwc:
+    description: BedWars.cash admin commands.
+    usage: /bwc <setlobby|forcestart|end>
+    permission: bedwarscash.admin
+  shop:
+    description: Open the in-match item shop.
+    usage: /shop
+  upgrades:
+    description: Open the team upgrades shop.
+    usage: /upgrades
+  party:
+    description: Invite friends and queue on the same team.
+    usage: /party <invite|accept|leave|list> [player]

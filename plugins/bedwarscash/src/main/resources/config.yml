@@ -1,0 +1,48 @@
+# BedWarsCash plugin configuration
+
+backend:
+  # WebSocket URL of the bedwars.cash backend.
+  ws-url: "ws://localhost:8787/ws/plugin"
+  # Must match PLUGIN_TOKEN in the backend .env
+  token: "change-me-plugin-token"
+  # Seconds between reconnect attempts if the backend is unreachable.
+  reconnect-seconds: 5
+
+anticheat:
+  # Sustained clicks-per-second above this flags a possible autoclicker.
+  max-cps: 20
+
+join:
+  auto-queue: true
+  delay-ticks: 20
+
+lobby:
+  # procedural = built-in void hub. custom = import from plugins/BedWarsCash/maps/<template>/
+  mode: procedural
+  template: ""
+  world: bwc_lobby
+  # custom maps: players falling below this Y in the lobby are teleported to spawn
+  min-y: 50
+  # Set in-game with /bwc setlobby (op). Until then, the world spawn is used.
+  x: 0
+  y: 64
+  z: 0
+  yaw: 0
+  pitch: 0
+
+game:
+  countdown-seconds: 10
+
+# Automated broadcast camera (pairs with OBS + STREAM_URL on the backend).
+broadcast:
+  enabled: false
+  # Minecraft username of the cast client (must stay online during matches).
+  username: "BWC_Cast"
+  # Seconds before switching to the next team perspective.
+  seconds-per-team: 120
+
+arena:
+  # procedural = built-in islands. To use a custom map, place a world folder under
+  # plugins/BedWarsCash/maps/<name>/ and set template to that name (coming soon).
+  mode: procedural
+  template: default

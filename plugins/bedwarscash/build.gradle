@@ -1,0 +1,37 @@
+plugins {
+    id 'java'
+}
+
+group = 'cash.bedwars'
+version = '0.1.0'
+
+java {
+    // Paper 26.1 requires (and is published for) Java 25.
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://repo.tomkeuper.com/repository/releases/' }
+}
+
+dependencies {
+    // Paper 26.1.2 API (new year-based versioning, JVM 25).
+    compileOnly 'io.papermc.paper:paper-api:26.1.2.build.+'
+    // BedWars API (interfaces only). Provided by BedWars2023 / swe3tie BedWars2026.
+    // The hook is optional at runtime; /bwresult is a fork-agnostic fallback.
+    compileOnly('com.tomkeuper.bedwars:bedwars-api:5.0.0') { transitive = false }
+    // Gson is provided by the Paper server runtime, so no shading needed.
+    compileOnly 'com.google.code.gson:gson:2.11.0'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('jar') {
+    archiveClassifier.set('')
+}

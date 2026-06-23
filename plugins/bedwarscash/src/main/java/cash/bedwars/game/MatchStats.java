@@ -1,0 +1,52 @@
+package cash.bedwars.game;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/** Kill / bed-break stats for the active match. */
+public final class MatchStats {
+    private final Map<UUID, int[]> stats = new HashMap<>();
+
+    public void clear() {
+        stats.clear();
+    }
+
+    public void addKill(UUID uuid) {
+        bump(uuid, 0);
+    }
+
+    public void addFinalKill(UUID uuid) {
+        bump(uuid, 0);
+        bump(uuid, 1);
+    }
+
+    public void addBedBreak(UUID uuid) {
+        bump(uuid, 2);
+    }
+
+    public int kills(UUID uuid) { return get(uuid, 0); }
+    public int finalKills(UUID uuid) { return get(uuid, 1); }
+    public int beds(UUID uuid) { return get(uuid, 2); }
+
+    public UUID topKiller() {
+        UUID best = null;
+        int bestK = -1;
+        for (Map.Entry<UUID, int[]> e : stats.entrySet()) {
+            if (e.getValue()[0] > bestK) {
+                bestK = e.getValue()[0];
+                best = e.getKey();
+            }
+        }
+        return best;
+    }
+
+    private void bump(UUID uuid, int idx) {
+        stats.computeIfAbsent(uuid, k -> new int[3])[idx]++;
+    }
+
+    private int get(UUID uuid, int idx) {
+        int[] arr = stats.get(uuid);
+        return arr == null ? 0 : arr[idx];
+    }
+}
