@@ -14,7 +14,7 @@ function isHlsUrl(url: string): boolean {
 export function LiveStreamPanel({ state }: { state: PublicState | null }) {
   const phase = state?.match?.phase;
   const stream = state?.stream;
-  const show = !!stream?.url && (phase === 'live' || phase === 'starting' || phase === 'settling');
+  const show = !!stream?.url && (phase === 'live' || phase === 'lobby' || phase === 'settling');
 
   if (!show || !stream?.url) return null;
 
