@@ -1,6 +1,10 @@
 # BedWars.cash — Developer Notes
 
-Internal reference for how the project is built, what is implemented, and how the pieces connect. For setup and run instructions, see [SETUP.md](./SETUP.md).
+Internal reference for how the project is built, what is implemented, and how the pieces connect.
+
+- **Players / operators:** [GAME.md](./GAME.md) — match flow, rewards, betting, plugin commands  
+- **Setup:** [SETUP.md](./SETUP.md)  
+- **Deploy:** [DEPLOY.md](./DEPLOY.md)
 
 ---
 

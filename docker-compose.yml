@@ -34,6 +34,7 @@ services:
       args:
         VITE_API_URL: https://server.${DOMAIN:-bedwars.cash}
         VITE_WS_URL: wss://server.${DOMAIN:-bedwars.cash}/ws/web
+        VITE_MC_SERVER: join.${DOMAIN:-bedwars.cash}
     restart: unless-stopped
     ports:
       # For host nginx/Apache — only bound to localhost, does not use 80/443

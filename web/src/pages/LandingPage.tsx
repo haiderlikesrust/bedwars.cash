@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 
 import { Layout } from '../components/Layout';
+import { SolAmount, SolIcon, SolUnit } from '../components/SolIcon';
 import { useLive } from '../useLive';
 import { lamportsToSol, type MatchPhase } from '../types';
 
@@ -11,48 +12,28 @@ const PHASE_LABEL: Record<MatchPhase, string> = {
   settling: 'Settling',
 };
 
-const FEATURES = [  {
-
+const FEATURES = [
+  {
     icon: '🏆',
-
     title: 'Win the match',
-
     desc: 'Queue for 4v4v4v4 BedWars. Destroy beds, outlast the other teams, and take the W — the winning squad splits the SOL reward pool.',
-
   },
-
   {
-
-    icon: '⚔',
-
+    imageIcon: '/sword.png',
     title: 'Skill-based PvP',
-
     desc: 'Sixteen players, four teams, one island. Your gameplay decides the outcome — not luck, not house odds.',
-
   },
-
   {
-
-    icon: '⛓',
-
+    solIcon: true,
     title: 'Solana payouts',
-
     desc: 'Link your Minecraft account, and winnings land in your wallet automatically when your team wins.',
-
   },
-
   {
-
-    icon: '◎',
-
-    title: 'Spectator betting',
-
-    desc: 'Side option: watch from the sidelines and bet on a team during lobby. Separate pool, live parimutuel odds — totally optional.',
-
+    solIcon: true,
     side: true,
-
+    title: 'Spectator betting',
+    desc: 'Side option: watch from the sidelines and bet on a team during lobby. Separate pool, live parimutuel odds — totally optional.',
   },
-
 ];
 
 
@@ -95,7 +76,9 @@ export function LandingPage() {
 
         <div className="hero-content">
 
-          <p className="hero-tag">Skill-based BedWars · Solana devnet</p>
+          <p className="hero-tag">
+            Skill-based BedWars · <SolIcon size={14} className="hero-tag-icon" /> Solana devnet
+          </p>
 
           <h1 className="hero-title">
 
@@ -131,11 +114,11 @@ export function LandingPage() {
 
             </Link>
 
-            <a href="#how-it-works" className="btn btn-secondary btn-lg">
+            <Link to="/guide" className="btn btn-secondary btn-lg">
 
-              How it works
+              Player guide
 
-            </a>
+            </Link>
 
           </div>
 
@@ -174,11 +157,10 @@ export function LandingPage() {
             </div>
 
             <div className="hero-stat">
-
-              <span className="hero-stat-val">SOL</span>
-
+              <span className="hero-stat-val">
+                <SolUnit size={20} />
+              </span>
               <span className="hero-stat-label">Prize pool</span>
-
             </div>
 
           </div>
@@ -195,7 +177,9 @@ export function LandingPage() {
           </div>
           <div className="live-strip-item">
             <span className="live-strip-label">Spectator pool</span>
-            <span className="live-strip-val">{spectatorPool.toFixed(4)} SOL</span>
+            <span className="live-strip-val">
+              <SolAmount amount={spectatorPool} decimals={4} iconSize={16} />
+            </span>
           </div>
         </div>
       </section>
@@ -228,7 +212,19 @@ export function LandingPage() {
 
               {f.side && <span className="feature-badge">Optional</span>}
 
-              <span className="feature-icon">{f.icon}</span>
+              {f.solIcon ? (
+                <SolIcon className="feature-icon" size={32} />
+              ) : f.imageIcon ? (
+                <img
+                  src={f.imageIcon}
+                  alt=""
+                  width={32}
+                  height={32}
+                  className="feature-icon"
+                />
+              ) : (
+                <span className="feature-icon">{f.icon}</span>
+              )}
 
               <h3>{f.title}</h3>
 
@@ -269,6 +265,10 @@ export function LandingPage() {
           ))}
 
         </div>
+
+        <p className="guide-more-link">
+          <Link to="/guide">Read the full player guide →</Link>
+        </p>
 
       </section>
 

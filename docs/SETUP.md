@@ -2,6 +2,8 @@
 
 Everything runs on **Solana devnet** with free test SOL. No real money.
 
+> **How the game works** (match flow, plugin, rewards, betting, commands): see **[GAME.md](./GAME.md)**.
+
 ## Components
 
 1. **backend/** - Node + TypeScript API + WebSocket hub (custodial wallets, matchmaking, parimutuel betting, settlement).
@@ -72,7 +74,7 @@ Copy the jar into `server/plugins/`. Edit `server/plugins/BedWarsCash/config.yml
    java -Xms2G -Xmx4G -jar paper.jar nogui    # must be Java 25
    ```
    Accept the EULA (`eula=true` in `eula.txt`), set `online-mode=true` in `server.properties`.
-4. Set up a BedWars arena with **4 teams: Green, Blue, Red, Yellow**, 4 players each. Put the arena name in the plugin config (`arena.name`) or leave blank to use the first arena.
+4. Arena and lobby are **built-in** (procedural void worlds) or imported via `BedWarsCash/config.yml`. See [GAME.md](./GAME.md#custom-maps) for custom maps. No external BedWars plugin is required.
 
 ### Reporting the winner across BedWars forks
 

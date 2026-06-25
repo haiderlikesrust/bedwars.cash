@@ -15,6 +15,7 @@ import { useLive } from '../useLive';
 import { BettingBoard } from '../components/BettingBoard';
 import { LiveStreamPanel } from '../components/LiveStreamPanel';
 import { Layout } from '../components/Layout';
+import { SolAmount, SolUnit } from '../components/SolIcon';
 
 export function DashboardPage() {
   const live = useLive();
@@ -70,7 +71,7 @@ export function DashboardPage() {
           {me ? (
             <>
               <div className="balance">
-                {me.balanceSol.toFixed(4)} <span>SOL</span>
+                {me.balanceSol.toFixed(4)} <SolUnit size={18} />
               </div>
               <p className="muted">Deposit devnet SOL to this address. It is credited automatically.</p>
               <div className="deposit">
@@ -97,11 +98,15 @@ export function DashboardPage() {
             <ul className="kv">
               <li>
                 <span>Available for winners</span>
-                <strong>{house.availableRewardPoolSol.toFixed(4)} SOL</strong>
+                <strong>
+                  <SolAmount amount={house.availableRewardPoolSol} decimals={4} />
+                </strong>
               </li>
               <li>
                 <span>House balance</span>
-                <strong>{house.balanceSol.toFixed(4)} SOL</strong>
+                <strong>
+                  <SolAmount amount={house.balanceSol} decimals={4} />
+                </strong>
               </li>
             </ul>
           ) : (

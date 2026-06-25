@@ -22,15 +22,16 @@ export function Layout({
 
       <header className="topbar mc-panel">
         <Link to="/" className="brand">
-          <span className="brand-icon" aria-hidden="true">
-            🛏
-          </span>
+          <img className="brand-icon" src="/logo.png" alt="" width={32} height={32} />
           BedWars<span className="accent">.cash</span>
         </Link>
 
         <nav className="nav">
           <Link to="/" className={pathname === '/' ? 'nav-link active' : 'nav-link'}>
             Home
+          </Link>
+          <Link to="/guide" className={pathname === '/guide' ? 'nav-link active' : 'nav-link'}>
+            Guide
           </Link>
           <Link to="/play" className={pathname === '/play' ? 'nav-link active' : 'nav-link'}>
             Arena

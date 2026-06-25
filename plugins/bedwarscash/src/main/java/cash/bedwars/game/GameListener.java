@@ -11,7 +11,10 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Bed;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TNTPrimed;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -218,10 +221,31 @@ public class GameListener implements Listener {
     public void onPvp(EntityDamageByEntityEvent event) {
         if (!(event.getEntity() instanceof Player victim)) return;
         if (!worlds.isArenaWorld(victim.getWorld()) || !game.isLive()) return;
-        if (!(event.getDamager() instanceof Player attacker)) return;
+
+        Player attacker = resolveDamagingPlayer(event.getDamager());
+        if (attacker == null) return;
+
         if (!game.isActiveFighter(victim) || !game.isActiveFighter(attacker)) {
             event.setCancelled(true);
+            return;
         }
+        if (isSameTeam(attacker, victim)) {
+            event.setCancelled(true);
+        }
+    }
+
+    /** Direct hits, arrows, fireballs, TNT, splash potions, etc. */
+    private Player resolveDamagingPlayer(Entity damager) {
+        if (damager instanceof Player p) return p;
+        if (damager instanceof Projectile proj && proj.getShooter() instanceof Player p) return p;
+        if (damager instanceof TNTPrimed tnt && tnt.getSource() instanceof Player p) return p;
+        return null;
+    }
+
+    private boolean isSameTeam(Player a, Player b) {
+        TeamColor ta = game.teamOf(a.getUniqueId());
+        TeamColor tb = game.teamOf(b.getUniqueId());
+        return ta != null && ta == tb;
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)

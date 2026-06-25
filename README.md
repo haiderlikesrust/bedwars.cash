@@ -17,7 +17,7 @@ A skill-based BedWars wagering platform on **Solana devnet** (free test SOL, zer
 | `plugins/bedwarscash/` | Paper plugin: `/setwallet`, in-game betting GUI, match orchestration, anti-cheat hooks |
 | `server/` | Paper 26.1.2 server runtime, Java 25 (BedWars2026 fork + GrimAC) - jars are gitignored |
 | `web/` | React (Vite) app `bedwars.cash/bet`: onboarding, deposit/withdraw, live odds, leaderboard |
-| `docs/` | Setup and run notes |
+| `docs/` | Setup, deployment, and **[how the game works](./docs/GAME.md)** |
 
 ## Prerequisites
 
@@ -27,7 +27,11 @@ A skill-based BedWars wagering platform on **Solana devnet** (free test SOL, zer
 
 ## Quick start
 
-See [docs/SETUP.md](docs/SETUP.md) for full instructions. In short:
+- **[Player guide](https://bedwars.cash/guide)** — website docs for fighters & spectators  
+- **[How the game works](docs/GAME.md)** — full reference (repo)  
+- **[Setup & run](docs/SETUP.md)** — local dev environment  
+
+In short:
 
 ```bash
 # backend

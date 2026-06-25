@@ -1,5 +1,6 @@
 import type { Odds, PublicState, TeamColor } from '../types';
 import { lamportsToSol } from '../types';
+import { SolAmount } from './SolIcon';
 
 const TEAM_META: Record<TeamColor, { label: string; class: string }> = {
   GREEN: { label: 'Green', class: 'green' },
@@ -31,11 +32,15 @@ export function BettingBoard({ odds, state }: { odds: Odds | null; state: Public
       <div className="board-stats">
         <div>
           <span className="muted small">Player reward pool</span>
-          <div className="stat">{rewardPool.toFixed(4)} SOL</div>
+          <div className="stat">
+            <SolAmount amount={rewardPool} decimals={4} />
+          </div>
         </div>
         <div>
           <span className="muted small">Spectator pool</span>
-          <div className="stat stat--secondary">{total.toFixed(4)} SOL</div>
+          <div className="stat stat--secondary">
+            <SolAmount amount={total} decimals={4} />
+          </div>
         </div>
         <div>
           <span className="muted small">Queue</span>
@@ -66,7 +71,8 @@ export function BettingBoard({ odds, state }: { odds: Odds | null; state: Public
                 <div className="bar-fill" style={{ width: `${share}%` }} />
               </div>
               <div className="team-bottom muted small">
-                {pool.toFixed(3)} SOL · {t.bettors} bettor{t.bettors === 1 ? '' : 's'}
+                <SolAmount amount={pool} decimals={3} iconSize={12} /> · {t.bettors} bettor
+                {t.bettors === 1 ? '' : 's'}
               </div>
             </div>
           );

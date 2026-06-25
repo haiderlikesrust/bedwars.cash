@@ -8,8 +8,10 @@ COPY web/ ./
 
 ARG VITE_API_URL=https://server.bedwars.cash
 ARG VITE_WS_URL=wss://server.bedwars.cash/ws/web
+ARG VITE_MC_SERVER=join.bedwars.cash
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_WS_URL=$VITE_WS_URL
+ENV VITE_MC_SERVER=$VITE_MC_SERVER
 
 RUN npm run build
 
