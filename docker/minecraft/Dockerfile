@@ -1,5 +1,5 @@
-# ---- Build BedWarsCash plugin (Gradle on JDK 23, compile with JDK 25 toolchain) ----
-FROM eclipse-temurin:23-jdk-jammy AS plugin
+# ---- Build BedWarsCash plugin (Gradle on JDK 21, compile with JDK 25 toolchain) ----
+FROM eclipse-temurin:21-jdk-jammy AS plugin
 
 ENV JAVA_HOME=/opt/java/openjdk
 WORKDIR /build
