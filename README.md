@@ -40,6 +40,23 @@ cd web && npm install && npm run dev
 # see docs/SETUP.md to download Paper + BedWars2023 + GrimAC into server/
 ```
 
+## Production (VPS + Docker)
+
+Deploy the full stack with Caddy HTTPS and Paper 26:
+
+```bash
+cp .env.production.example .env   # set PLUGIN_TOKEN, APP_SECRET, ACME_EMAIL
+docker compose --env-file .env up -d --build
+```
+
+| URL | Service |
+| --- | --- |
+| `https://bedwars.cash` | Website |
+| `https://server.bedwars.cash` | Backend API |
+| `join.bedwars.cash:25565` | Minecraft server |
+
+Full DNS, secrets, and troubleshooting: **[docs/DEPLOY.md](docs/DEPLOY.md)**.
+
 ## Status
 
 Active build. See the project plan for milestones.

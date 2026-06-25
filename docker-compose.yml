@@ -1,0 +1,92 @@
+# BedWars.cash production stack
+# https://bedwars.cash — see docs/DEPLOY.md
+
+name: bedwarscash
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN:-bedwars.cash}
+      ACME_EMAIL: ${ACME_EMAIL:-admin@bedwars.cash}
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web/Dockerfile
+      args:
+        VITE_API_URL: https://server.${DOMAIN:-bedwars.cash}
+        VITE_WS_URL: wss://server.${DOMAIN:-bedwars.cash}/ws/web
+    restart: unless-stopped
+    expose:
+      - "80"
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend/Dockerfile
+    restart: unless-stopped
+    expose:
+      - "8787"
+    environment:
+      PORT: "8787"
+      WEB_ORIGIN: https://${DOMAIN:-bedwars.cash}
+      PLUGIN_TOKEN: ${PLUGIN_TOKEN}
+      APP_SECRET: ${APP_SECRET}
+      SOLANA_CLUSTER: ${SOLANA_CLUSTER:-devnet}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      HOUSE_WALLET_SECRET: ${HOUSE_WALLET_SECRET:-}
+      HOUSE_RESERVE_SOL: ${HOUSE_RESERVE_SOL:-0.5}
+      REWARD_POOL_CAP_SOL: ${REWARD_POOL_CAP_SOL:-0}
+      FEE_SOURCE: ${FEE_SOURCE:-mock}
+      MATCH_PLAYER_COUNT: ${MATCH_PLAYER_COUNT:-16}
+      TEAM_SIZE: ${TEAM_SIZE:-4}
+      BETTING_RAKE: ${BETTING_RAKE:-0.05}
+      MIN_BET_SOL: ${MIN_BET_SOL:-0.01}
+      MAX_BET_SOL: ${MAX_BET_SOL:-100}
+      MIN_WALLET_AGE_HOURS: ${MIN_WALLET_AGE_HOURS:-24}
+      MANUAL_REVIEW_THRESHOLD_SOL: ${MANUAL_REVIEW_THRESHOLD_SOL:-5}
+      STREAM_URL: ${STREAM_URL:-}
+    volumes:
+      - backend_data:/app/data
+      - backend_wallets:/app/wallets
+
+  minecraft:
+    build:
+      context: .
+      dockerfile: docker/minecraft/Dockerfile
+    restart: unless-stopped
+    ports:
+      # join.bedwars.cash → point DNS A record to this VPS IP (port 25565)
+      - "25565:25565"
+    environment:
+      PLUGIN_TOKEN: ${PLUGIN_TOKEN}
+      BACKEND_WS_URL: ws://backend:8787/ws/plugin
+      MC_MEMORY: ${MC_MEMORY:-4G}
+      MC_ONLINE_MODE: ${MC_ONLINE_MODE:-true}
+    volumes:
+      - minecraft_data:/minecraft
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:
+  backend_data:
+  backend_wallets:
+  minecraft_data:

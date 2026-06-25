@@ -44,6 +44,5 @@ broadcast:
 arena:
   # procedural = built-in islands. custom = import from plugins/BedWarsCash/maps/<template>/
   mode: procedural
-  template: ginko_arena
+  template: ""
   world: bwc_arena
-  scan-chunk-radius: 20

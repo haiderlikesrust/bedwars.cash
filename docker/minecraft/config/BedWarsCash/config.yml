@@ -1,0 +1,31 @@
+# BedWarsCash plugin config (Docker). PLUGIN_TOKEN and ws-url are patched at container start.
+backend:
+  ws-url: "ws://backend:8787/ws/plugin"
+  token: "PLUGIN_TOKEN_PLACEHOLDER"
+  reconnect-seconds: 5
+
+anticheat:
+  max-cps: 20
+
+join:
+  auto-queue: true
+  delay-ticks: 20
+
+lobby:
+  mode: procedural
+  template: ""
+  world: bwc_lobby
+  min-y: 50
+
+game:
+  countdown-seconds: 10
+
+broadcast:
+  enabled: false
+  username: "BWC_Cast"
+  seconds-per-team: 120
+
+arena:
+  mode: procedural
+  template: ""
+  world: bwc_arena
