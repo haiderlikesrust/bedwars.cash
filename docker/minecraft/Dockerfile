@@ -1,9 +1,12 @@
-# ---- Build BedWarsCash plugin (Java 25 / Paper 26 API) ----
-FROM eclipse-temurin:25-jdk-jammy AS plugin
+# ---- Build BedWarsCash plugin (Gradle on JDK 23, compile with JDK 25 toolchain) ----
+FROM eclipse-temurin:23-jdk-jammy AS plugin
 
+ENV JAVA_HOME=/opt/java/openjdk
 WORKDIR /build
 COPY plugins/bedwarscash/ ./
-RUN chmod +x gradlew && ./gradlew build --no-daemon -x test
+RUN sed -i 's/\r$//' gradlew \
+    && chmod +x gradlew \
+    && ./gradlew build --no-daemon -x test
 
 # ---- Paper 26.1.2 game server ----
 FROM eclipse-temurin:25-jre-jammy

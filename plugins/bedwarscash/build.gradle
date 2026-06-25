@@ -20,7 +20,7 @@ repositories {
 
 dependencies {
     // Paper 26.1.2 API (new year-based versioning, JVM 25).
-    compileOnly 'io.papermc.paper:paper-api:26.1.2.build.+'
+    compileOnly 'io.papermc.paper:paper-api:26.1.2.build.72-stable'
     // BedWars API (interfaces only). Provided by BedWars2023 / swe3tie BedWars2026.
     // The hook is optional at runtime; /bwresult is a fork-agnostic fallback.
     compileOnly('com.tomkeuper.bedwars:bedwars-api:5.0.0') { transitive = false }
