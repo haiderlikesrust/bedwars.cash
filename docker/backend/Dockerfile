@@ -9,7 +9,7 @@ WORKDIR /app
 COPY backend/package.json backend/package-lock.json ./
 RUN npm ci
 
-COPY backend/tsconfig.json backend/tsconfig.json
+COPY backend/tsconfig.json ./
 COPY backend/src ./src
 RUN npm run build
 
