@@ -11,6 +11,8 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"
+    env_file:
+      - .env
     environment:
       DOMAIN: ${DOMAIN:-bedwars.cash}
       ACME_EMAIL: ${ACME_EMAIL:-admin@bedwars.cash}

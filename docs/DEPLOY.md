@@ -128,11 +128,14 @@ Caddy needs ports **80** and **443** for HTTPS. If the stack built but Caddy fai
 
 ```bash
 sudo ss -tlnp | grep -E ':80|:443'
+docker port bedwarscash-caddy-1
 ```
+
+**Both** ports must be free (or owned by Caddy). A common mistake is stopping nginx for port 80 while it still holds **443** — the site then shows `ERR_SSL_PROTOCOL_ERROR` in the browser.
 
 Common on fresh VPS images: **nginx** or **Apache**.
 
-**Option A — use Caddy (recommended for this repo):** stop the other web server, then start Caddy:
+**Option A — use Caddy (recommended for this repo):** stop the other web server on **80 and 443**, then recreate Caddy:
 
 ```bash
 # nginx
@@ -143,10 +146,18 @@ sudo systemctl disable nginx
 sudo systemctl stop apache2
 sudo systemctl disable apache2
 
+# confirm nothing else is on 80/443
+sudo ss -tlnp | grep -E ':80|:443'
+
 cd ~/bedwars.cash
-docker compose --env-file .env up -d caddy
+git pull
+docker compose --env-file .env up -d --force-recreate caddy
 docker compose ps
+docker port bedwarscash-caddy-1
+docker compose logs caddy --tail 50
 ```
+
+`docker port bedwarscash-caddy-1` should show `80/tcp` and `443/tcp` mapped to the host.
 
 **Option B — keep nginx/Apache:** do not run the `caddy` service; point your existing reverse proxy at the Docker network instead:
 
@@ -154,6 +165,18 @@ docker compose ps
 - `server.bedwars.cash` → backend on 8787
 
 For Option B you must publish `web` and `backend` ports yourself and handle TLS in nginx/Apache instead of Caddy.
+
+### `ERR_SSL_PROTOCOL_ERROR` in the browser
+
+Usually means port **443** is not serving TLS from Caddy. Run the checks above, then:
+
+```bash
+curl -vI http://bedwars.cash          # should redirect to https
+curl -vI https://bedwars.cash         # should show HTTP/2 200 and a Let's Encrypt cert
+docker compose logs caddy --tail 100  # look for "certificate obtained successfully"
+```
+
+If the domain uses **Cloudflare**, set DNS records to **DNS only** (grey cloud) until Caddy has issued certificates, then use **Full (strict)** — not Flexible.
 
 ## Architecture
 
