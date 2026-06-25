@@ -44,8 +44,9 @@ public class LobbyService {
             return;
         }
         if (!force && (plugin.game().isLive() || plugin.game().isStarting()
-                || "live".equals(plugin.backend().matchPhase())
-                || "settling".equals(plugin.backend().matchPhase()))) {
+                || (!worlds.isLobbyWorld(p.getWorld())
+                && ("live".equals(plugin.backend().matchPhase())
+                || "settling".equals(plugin.backend().matchPhase()))))) {
             SpectatorHelper.enter(p);
             return;
         }

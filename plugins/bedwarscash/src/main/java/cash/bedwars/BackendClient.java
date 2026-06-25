@@ -186,8 +186,12 @@ public class BackendClient implements WebSocket.Listener {
                 if (!message.isBlank()) p.sendMessage("§b[BedWars.cash] §f" + message);
             }
             case "queued" -> {
-                lobby.enterLobby(p);
+                // Already in lobby after post-match return — don't re-enter spectator via stale backend phase.
+                if (!lobby.isLobbyPlayer(p)) {
+                    lobby.enterLobby(p);
+                }
                 if (!message.isBlank()) p.sendMessage("§b[BedWars.cash] §a" + message);
+                scoreboard.apply(p);
             }
             default -> {
                 lobby.enterLobby(p);

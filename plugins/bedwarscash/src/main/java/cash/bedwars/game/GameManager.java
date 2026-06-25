@@ -70,6 +70,8 @@ public class GameManager {
     private boolean starting = false;
 
     private int countdownTask = -1;
+    /** Bumps when a match ends so delayed spectator tasks cannot run on the next lobby. */
+    private int matchGeneration = 0;
 
     private final Map<UUID, TeamColor> playerTeam = new HashMap<>();
 
@@ -479,14 +481,22 @@ public class GameManager {
     }
 
     private void scheduleSpectatorEnter(Player p) {
+        int generation = matchGeneration;
         for (long delay : new long[]{1L, 3L, 5L, 10L, 20L}) {
-            Bukkit.getScheduler().runTaskLater(plugin, () -> applySpectatorAfterRespawn(p), delay);
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                if (generation != matchGeneration) return;
+                applySpectatorAfterRespawn(p);
+            }, delay);
         }
     }
 
     /** Called after respawn (and retried) until spectator mode sticks. */
     public void applySpectatorAfterRespawn(Player p) {
         if (p == null || !p.isOnline()) return;
+        if (!live && !starting) {
+            pendingSpectator.remove(p.getUniqueId());
+            return;
+        }
         if (!pendingSpectator.contains(p.getUniqueId())) return;
 
         p.getInventory().clear();
@@ -639,9 +649,11 @@ public class GameManager {
 
     private void resetMatchState() {
 
+        matchGeneration++;
         live = false;
 
         starting = false;
+        pendingSpectator.clear();
 
         worlds.setArenaMatchDifficulty(false);
 
