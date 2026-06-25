@@ -23,6 +23,12 @@ COPY docker/minecraft/config/BedWarsCash/ /opt/bwc-defaults/BedWarsCash/
 
 COPY --from=plugin /build/build/libs/bedwarscash-*.jar /opt/BedWarsCash.jar
 
+ARG PAPER_VERSION=26.1.2
+RUN PAPER_URL="$(curl -fsSL -H "User-Agent: bedwars.cash/1.0" \
+      "https://fill.papermc.io/v3/projects/paper/versions/${PAPER_VERSION}/builds" \
+      | python3 -c "import sys,json; bs=json.load(sys.stdin); b=next(x for x in bs if x.get('channel')=='STABLE'); print(b['downloads']['server:default']['url'])")" \
+    && curl -fsSL -H "User-Agent: bedwars.cash/1.0" "$PAPER_URL" -o /opt/paper.jar
+
 RUN chmod +x /usr/local/bin/bwc-entrypoint.sh \
     && mkdir -p plugins \
     && cp /opt/BedWarsCash.jar plugins/BedWarsCash.jar

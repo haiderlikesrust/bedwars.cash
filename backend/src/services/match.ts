@@ -356,6 +356,9 @@ export async function reportResult(
   });
   settleTx();
 
+  clearQueue();
+  openLobby();
+
   // 2) Pay the winning team's reward pool to their linked wallets (on-chain).
   const shares = splitRewardPool(m.rewardPoolLamports, winnerUuids.length);
   for (let i = 0; i < winnerUuids.length; i++) {
@@ -377,9 +380,7 @@ export async function reportResult(
   }
 
   db.prepare("UPDATE matches SET phase = 'settling', ended_at = ? WHERE id = ?").run(Date.now(), matchId);
-  clearQueue();
   matchEvents.emit('notice', { message: `${winningTeam} won! Payouts settled.` });
-  openLobby();
 }
 
 export function abortMatch(matchId: number, reason: string): void {

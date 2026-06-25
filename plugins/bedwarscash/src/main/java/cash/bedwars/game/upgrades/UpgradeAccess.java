@@ -2,6 +2,7 @@ package cash.bedwars.game.upgrades;
 
 import cash.bedwars.BedWarsCashPlugin;
 import cash.bedwars.game.GameManager;
+import cash.bedwars.game.GameItems;
 import cash.bedwars.game.TeamColor;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
@@ -69,5 +70,6 @@ public final class UpgradeAccess {
             meta.addEnchant(Enchantment.PROTECTION, prot, true);
         }
         stack.setItemMeta(meta);
+        GameItems.markPermanent(stack);
     }
 }

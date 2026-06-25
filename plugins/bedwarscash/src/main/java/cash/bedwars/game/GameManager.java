@@ -35,6 +35,7 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 
 import org.bukkit.inventory.ItemStack;
+import cash.bedwars.game.GameItems;
 import cash.bedwars.game.shop.ShopAccess;
 import cash.bedwars.game.shop.ShopPurchases;
 import cash.bedwars.game.upgrades.TeamUpgradeState;
@@ -394,7 +395,9 @@ public class GameManager {
     private void giveKit(Player p, TeamColor team) {
         p.getInventory().clear();
         stripBedItems(p);
-        p.getInventory().addItem(new ItemStack(Material.WOODEN_SWORD));
+        ItemStack sword = new ItemStack(Material.WOODEN_SWORD);
+        GameItems.markPermanent(sword);
+        p.getInventory().addItem(sword);
         p.getInventory().addItem(new ItemStack(team.wool(), 16));
         p.getInventory().setItem(8, ShopAccess.createShopItem());
     }
@@ -622,9 +625,13 @@ public class GameManager {
 
     private void returnEveryoneToLobby() {
         pendingSpectator.clear();
+        boolean autoQueue = plugin.getConfig().getBoolean("join.auto-queue", true);
         for (Player p : Bukkit.getOnlinePlayers()) {
             ShopPurchases.reset(p);
             lobby.enterLobby(p, true);
+            if (autoQueue && !plugin.broadcast().shouldSkipJoinFlow(p)) {
+                plugin.backend().queueJoin(p);
+            }
         }
     }
 

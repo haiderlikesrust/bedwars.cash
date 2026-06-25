@@ -1,5 +1,6 @@
 package cash.bedwars.game.shop;
 
+import cash.bedwars.game.GameItems;
 import cash.bedwars.game.SpecialItems;
 import cash.bedwars.game.TeamColor;
 import cash.bedwars.game.upgrades.TeamUpgradeState;
@@ -87,6 +88,7 @@ public final class ShopPurchases {
             if (offer.id().equals("kb_stick")) meta.addEnchant(Enchantment.KNOCKBACK, 1, true);
             stack.setItemMeta(meta);
         }
+        GameItems.markPermanent(stack);
         if (SpecialItems.isUtilityOffer(offer.id())) {
             SpecialItems.tag(stack, offer.id());
         }
@@ -123,25 +125,31 @@ public final class ShopPurchases {
         PlayerInventory inv = player.getInventory();
         switch (set) {
             case CHAINMAIL -> {
-                inv.setBoots(new ItemStack(Material.CHAINMAIL_BOOTS));
-                inv.setLeggings(new ItemStack(Material.CHAINMAIL_LEGGINGS));
-                inv.setChestplate(new ItemStack(Material.CHAINMAIL_CHESTPLATE));
-                inv.setHelmet(new ItemStack(Material.CHAINMAIL_HELMET));
+                inv.setBoots(permanent(Material.CHAINMAIL_BOOTS));
+                inv.setLeggings(permanent(Material.CHAINMAIL_LEGGINGS));
+                inv.setChestplate(permanent(Material.CHAINMAIL_CHESTPLATE));
+                inv.setHelmet(permanent(Material.CHAINMAIL_HELMET));
             }
             case IRON -> {
-                inv.setBoots(new ItemStack(Material.IRON_BOOTS));
-                inv.setLeggings(new ItemStack(Material.IRON_LEGGINGS));
-                inv.setChestplate(new ItemStack(Material.IRON_CHESTPLATE));
-                inv.setHelmet(new ItemStack(Material.IRON_HELMET));
+                inv.setBoots(permanent(Material.IRON_BOOTS));
+                inv.setLeggings(permanent(Material.IRON_LEGGINGS));
+                inv.setChestplate(permanent(Material.IRON_CHESTPLATE));
+                inv.setHelmet(permanent(Material.IRON_HELMET));
             }
             case DIAMOND -> {
-                inv.setBoots(new ItemStack(Material.DIAMOND_BOOTS));
-                inv.setLeggings(new ItemStack(Material.DIAMOND_LEGGINGS));
-                inv.setChestplate(new ItemStack(Material.DIAMOND_CHESTPLATE));
-                inv.setHelmet(new ItemStack(Material.DIAMOND_HELMET));
+                inv.setBoots(permanent(Material.DIAMOND_BOOTS));
+                inv.setLeggings(permanent(Material.DIAMOND_LEGGINGS));
+                inv.setChestplate(permanent(Material.DIAMOND_CHESTPLATE));
+                inv.setHelmet(permanent(Material.DIAMOND_HELMET));
             }
             default -> {}
         }
+    }
+
+    private static ItemStack permanent(Material material) {
+        ItemStack stack = new ItemStack(material);
+        GameItems.markPermanent(stack);
+        return stack;
     }
 
     private static boolean hasCost(Player p, Material mat, int amt) {
