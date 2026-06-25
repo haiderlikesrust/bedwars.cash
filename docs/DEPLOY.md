@@ -116,10 +116,44 @@ Mount a GrimAC jar into the running MC container:
 
 | Issue | Fix |
 |-------|-----|
+| `Bind for 0.0.0.0:80 failed: port is already allocated` | Another web server (nginx, Apache, etc.) is using port 80. See **Port 80 / 443 in use** below. |
 | Caddy no HTTPS | DNS must point to VPS before starting; check `docker compose logs caddy` |
 | Plugin won't connect | `PLUGIN_TOKEN` must match in `.env`; check `docker compose logs backend` |
 | MC out of memory | Raise `MC_MEMORY=6G` in `.env` and ensure VPS has enough RAM |
 | CORS errors | `WEB_ORIGIN` is set from `DOMAIN`; must be `https://bedwars.cash` |
+
+### Port 80 / 443 in use
+
+Caddy needs ports **80** and **443** for HTTPS. If the stack built but Caddy failed to start, find what is bound to those ports:
+
+```bash
+sudo ss -tlnp | grep -E ':80|:443'
+```
+
+Common on fresh VPS images: **nginx** or **Apache**.
+
+**Option A — use Caddy (recommended for this repo):** stop the other web server, then start Caddy:
+
+```bash
+# nginx
+sudo systemctl stop nginx
+sudo systemctl disable nginx
+
+# or Apache
+sudo systemctl stop apache2
+sudo systemctl disable apache2
+
+cd ~/bedwars.cash
+docker compose --env-file .env up -d caddy
+docker compose ps
+```
+
+**Option B — keep nginx/Apache:** do not run the `caddy` service; point your existing reverse proxy at the Docker network instead:
+
+- `bedwars.cash` → `http://127.0.0.1:8080` (publish `web` on 8080) or proxy to container IP
+- `server.bedwars.cash` → backend on 8787
+
+For Option B you must publish `web` and `backend` ports yourself and handle TLS in nginx/Apache instead of Caddy.
 
 ## Architecture
 
