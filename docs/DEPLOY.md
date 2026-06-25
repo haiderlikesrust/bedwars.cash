@@ -4,9 +4,18 @@ Production layout:
 
 | Hostname | Service | Notes |
 |----------|---------|--------|
-| `bedwars.cash` | React website | HTTPS via Caddy |
+| `bedwars.cash` | React website | HTTPS via Caddy **or** your existing nginx |
 | `server.bedwars.cash` | Node backend | REST API + WebSockets |
 | `join.bedwars.cash` | Minecraft | **A record → VPS IP**, port **25565** |
+
+## Deployment modes
+
+| Mode | When to use | Start command |
+|------|-------------|---------------|
+| **A — existing nginx/Apache** | Another site already uses ports 80/443 on the VPS | `docker compose --env-file .env up -d` |
+| **B — Caddy (dedicated VPS)** | Nothing else needs ports 80/443 | `docker compose --profile caddy --env-file .env up -d` |
+
+**Mode A** publishes the app on localhost only (`127.0.0.1:8080` web, `127.0.0.1:8787` backend). Add nginx server blocks from [`docker/nginx/host-nginx.example.conf`](../docker/nginx/host-nginx.example.conf) to your existing config.
 
 ## 1. VPS requirements
 
@@ -62,8 +71,42 @@ openssl rand -hex 32   # APP_SECRET
 
 ## 4. Build and start
 
+### Mode A — you already run nginx/Apache on this VPS
+
 ```bash
+# Remove any failed Caddy container from earlier attempts
+docker compose --env-file .env rm -f caddy 2>/dev/null || true
+
 docker compose --env-file .env up -d --build
+```
+
+Add the server blocks in [`docker/nginx/host-nginx.example.conf`](../docker/nginx/host-nginx.example.conf) to your **existing** nginx config, then:
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+Get certificates if you do not have them yet:
+
+```bash
+sudo certbot certonly --nginx -d bedwars.cash -d www.bedwars.cash -d server.bedwars.cash
+```
+
+Verify:
+
+```bash
+curl -s http://127.0.0.1:8080 | head
+curl -s http://127.0.0.1:8787/api/health
+curl -s https://bedwars.cash/api/health   # should 404 on main site — use server.bedwars.cash for API
+curl -s https://server.bedwars.cash/api/health
+```
+
+### Mode B — dedicated VPS (Caddy handles HTTPS)
+
+Requires ports **80** and **443** free on the host.
+
+```bash
+docker compose --profile caddy --env-file .env up -d --build
 ```
 
 First build takes several minutes (Gradle plugin + Paper download on first MC start).

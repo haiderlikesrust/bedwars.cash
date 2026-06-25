@@ -46,7 +46,8 @@ Deploy the full stack with Caddy HTTPS and Paper 26:
 
 ```bash
 cp .env.production.example .env   # set PLUGIN_TOKEN, APP_SECRET, ACME_EMAIL
-docker compose --env-file .env up -d --build
+docker compose --env-file .env up -d --build          # with existing nginx on VPS
+# or: docker compose --profile caddy --env-file .env up -d --build   # dedicated VPS
 ```
 
 | URL | Service |
