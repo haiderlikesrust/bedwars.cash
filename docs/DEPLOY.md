@@ -159,12 +159,28 @@ docker compose logs caddy --tail 50
 
 `docker port bedwarscash-caddy-1` should show `80/tcp` and `443/tcp` mapped to the host.
 
-**Option B — keep nginx/Apache:** do not run the `caddy` service; point your existing reverse proxy at the Docker network instead:
+**Option B — keep nginx/Apache:** do not run the `caddy` service; point your existing reverse proxy at the Docker network instead. Example config: [`docker/nginx/host-nginx.example.conf`](../docker/nginx/host-nginx.example.conf).
 
-- `bedwars.cash` → `http://127.0.0.1:8080` (publish `web` on 8080) or proxy to container IP
-- `server.bedwars.cash` → backend on 8787
+Publish app ports on localhost only:
 
-For Option B you must publish `web` and `backend` ports yourself and handle TLS in nginx/Apache instead of Caddy.
+```yaml
+# docker-compose.yml
+web:
+  ports:
+    - "127.0.0.1:8080:80"
+backend:
+  ports:
+    - "127.0.0.1:8787:8787"
+```
+
+Then start without Caddy:
+
+```bash
+docker compose --env-file .env up -d web backend minecraft
+sudo certbot --nginx -d bedwars.cash -d www.bedwars.cash -d server.bedwars.cash
+```
+
+For Option B you handle TLS in nginx/Apache instead of Caddy.
 
 ### `ERR_SSL_PROTOCOL_ERROR` in the browser
 
