@@ -283,7 +283,16 @@ public class BackendClient implements WebSocket.Listener {
         send(o);
     }
 
-    public void matchResult(int matchId, String winningTeam, List<UUID> winners) {
+    public record MatchPlayerStat(
+            String mcUuid,
+            String mcUsername,
+            int kills,
+            int finalKills,
+            int bedsBroken,
+            int deaths
+    ) {}
+
+    public void matchResult(int matchId, String winningTeam, List<UUID> winners, List<MatchPlayerStat> playerStats) {
         JsonObject o = new JsonObject();
         o.addProperty("type", "match_result");
         o.addProperty("matchId", matchId);
@@ -291,7 +300,25 @@ public class BackendClient implements WebSocket.Listener {
         JsonArray arr = new JsonArray();
         for (UUID u : winners) arr.add(u.toString());
         o.add("winnerUuids", arr);
+        JsonArray statsArr = new JsonArray();
+        if (playerStats != null) {
+            for (MatchPlayerStat s : playerStats) {
+                JsonObject row = new JsonObject();
+                row.addProperty("mcUuid", s.mcUuid());
+                row.addProperty("mcUsername", s.mcUsername());
+                row.addProperty("kills", s.kills());
+                row.addProperty("finalKills", s.finalKills());
+                row.addProperty("bedsBroken", s.bedsBroken());
+                row.addProperty("deaths", s.deaths());
+                statsArr.add(row);
+            }
+        }
+        o.add("playerStats", statsArr);
         send(o);
+    }
+
+    public void matchResult(int matchId, String winningTeam, List<UUID> winners) {
+        matchResult(matchId, winningTeam, winners, List.of());
     }
 
     public void matchAborted(int matchId, String reason) {

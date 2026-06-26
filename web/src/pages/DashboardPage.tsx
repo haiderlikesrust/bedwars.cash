@@ -154,6 +154,57 @@ export function DashboardPage() {
               </ol>
             </div>
           </div>
+          <div className="board-cols" style={{ marginTop: '18px' }}>
+            <div>
+              <h3>Top killers</h3>
+              <ol className="lb">
+                {leaderboard?.killers?.length ? (
+                  leaderboard.killers.map((k, i) => (
+                    <li key={i}>
+                      <span>{k.name}</span>
+                      <strong>
+                        {k.kills} <span className="muted small">({k.finalKills} final)</span>
+                      </strong>
+                    </li>
+                  ))
+                ) : (
+                  <li className="muted">No stats yet.</li>
+                )}
+              </ol>
+            </div>
+            <div>
+              <h3>Top bed breakers</h3>
+              <ol className="lb">
+                {leaderboard?.bedBreakers?.length ? (
+                  leaderboard.bedBreakers.map((b, i) => (
+                    <li key={i}>
+                      <span>{b.name}</span>
+                      <strong>{b.bedsBroken}</strong>
+                    </li>
+                  ))
+                ) : (
+                  <li className="muted">No stats yet.</li>
+                )}
+              </ol>
+            </div>
+          </div>
+          <div style={{ marginTop: '18px' }}>
+            <h3>Most match wins</h3>
+            <ol className="lb">
+              {leaderboard?.winners?.length ? (
+                leaderboard.winners.map((w, i) => (
+                  <li key={i}>
+                    <span>{w.name}</span>
+                    <strong>
+                      {w.wins}W <span className="muted small">/ {w.matchesPlayed} played</span>
+                    </strong>
+                  </li>
+                ))
+              ) : (
+                <li className="muted">No stats yet.</li>
+              )}
+            </ol>
+          </div>
         </section>
       </main>
     </Layout>

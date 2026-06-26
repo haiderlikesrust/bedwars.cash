@@ -13,6 +13,7 @@ import {
 import { buildOdds, forceAbortCurrent, forceStartMatch, publicState } from './services/match.js';
 import { ensureDepositWallet, houseAddress, houseBalanceLamports, houseTransfer } from './solana/custody.js';
 import { availableRewardPool, mockTopUp } from './solana/treasury.js';
+import { combatLeaderboard, getPlayerStats, sweatzoneLeaderboard } from './services/playerStats.js';
 import { pluginConnected } from './ws/hub.js';
 import { formatSol, lamportsToSol, solToLamports } from './util/money.js';
 
@@ -107,6 +108,16 @@ export function registerRoutes(app: FastifyInstance): void {
     availableRewardPoolSol: lamportsToSol(await availableRewardPool()),
   }));
 
+  app.get('/api/stats/:mcUuid', async (req) => {
+    const stats = getPlayerStats(req.params.mcUuid);
+    if (!stats) return { stats: null };
+    return { stats };
+  });
+
+  app.get('/api/sweatzone', async () => ({
+    players: sweatzoneLeaderboard(),
+  }));
+
   app.get('/api/leaderboard', async () => {
     // Top bettors by net profit across all bet-related ledger entries.
     const bettors = db
@@ -135,6 +146,7 @@ export function registerRoutes(app: FastifyInstance): void {
     return {
       bettors: bettors.map((b) => ({ name: b.name, netProfitSol: lamportsToSol(BigInt(b.net)) })),
       players: players.map((p) => ({ name: p.name, wonSol: lamportsToSol(BigInt(p.won)) })),
+      ...combatLeaderboard(),
     };
   });
 

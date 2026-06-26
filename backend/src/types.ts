@@ -60,7 +60,20 @@ export type PluginInbound =
   | { type: 'queue_join'; mcUuid: string }
   | { type: 'queue_leave'; mcUuid: string }
   | { type: 'place_bet'; mcUuid: string; team: TeamColor; amountSol: number }
-  | { type: 'match_result'; matchId: number; winningTeam: TeamColor; winnerUuids: string[] }
+  | {
+      type: 'match_result';
+      matchId: number;
+      winningTeam: TeamColor;
+      winnerUuids: string[];
+      playerStats?: Array<{
+        mcUuid: string;
+        mcUsername: string;
+        kills: number;
+        finalKills: number;
+        bedsBroken: number;
+        deaths: number;
+      }>;
+    }
   | { type: 'match_aborted'; matchId: number; reason: string }
   | { type: 'cheat_flag'; mcUuid: string; check: string; details: string }
   | { type: 'force_start'; mcUuid: string }

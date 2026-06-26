@@ -106,6 +106,18 @@ export function initSchema(): void {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS player_stats (
+      mc_uuid TEXT PRIMARY KEY,
+      mc_username TEXT NOT NULL,
+      matches_played INTEGER NOT NULL DEFAULT 0,
+      wins INTEGER NOT NULL DEFAULT 0,
+      kills INTEGER NOT NULL DEFAULT 0,
+      final_kills INTEGER NOT NULL DEFAULT 0,
+      beds_broken INTEGER NOT NULL DEFAULT 0,
+      deaths INTEGER NOT NULL DEFAULT 0,
+      updated_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS kv (
       k TEXT PRIMARY KEY,
       v TEXT NOT NULL

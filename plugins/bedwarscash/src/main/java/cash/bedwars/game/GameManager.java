@@ -4,6 +4,8 @@ package cash.bedwars.game;
 
 import cash.bedwars.BedWarsCashPlugin;
 
+import cash.bedwars.BackendClient;
+
 import cash.bedwars.LobbyService;
 
 import cash.bedwars.SpectatorHelper;
@@ -445,6 +447,8 @@ public class GameManager {
     public void onPlayerDeath(Player victim, Player killer) {
         if (!live || !playerTeam.containsKey(victim.getUniqueId())) return;
 
+        stats.addDeath(victim.getUniqueId());
+
         TeamColor team = playerTeam.get(victim.getUniqueId());
         boolean finalKill = !bedAlive.contains(team);
 
@@ -564,22 +568,27 @@ public class GameManager {
 
         plugin.broadcast().onMatchEnd();
 
-        resetMatchState();
-
+        int finishedMatchId = matchId;
+        Set<UUID> fighters = new HashSet<>(playerTeam.keySet());
+        Map<UUID, int[]> statsSnapshot = stats.snapshot();
         List<UUID> winners = winner == null ? List.of() : new ArrayList<>(teamMembers.get(winner));
+
+        resetMatchState();
 
         if (winner != null) {
 
             Bukkit.broadcastMessage(winner.chat() + "§l" + winner.id() + " WINS!");
-            UUID mvp = stats.topKiller();
+            UUID mvp = MatchStats.topKiller(statsSnapshot);
             if (mvp != null) {
+                int[] mvpStats = statsSnapshot.getOrDefault(mvp, new int[4]);
                 Player mvpP = Bukkit.getPlayer(mvp);
-                String name = mvpP != null ? mvpP.getName() : mvp.toString().substring(0, 8);
-                Bukkit.broadcastMessage("§6 MVP: §f" + name + " §7(" + stats.kills(mvp) + " kills, "
-                        + stats.finalKills(mvp) + " final, " + stats.beds(mvp) + " beds)");
+                String name = mvpP != null ? mvpP.getName() : Bukkit.getOfflinePlayer(mvp).getName();
+                if (name == null) name = mvp.toString().substring(0, 8);
+                Bukkit.broadcastMessage("§6 MVP: §f" + name + " §7(" + mvpStats[0] + " kills, "
+                        + mvpStats[1] + " final, " + mvpStats[2] + " beds)");
             }
 
-            plugin.backend().matchResult(matchId, winner.id(), winners);
+            plugin.backend().matchResult(finishedMatchId, winner.id(), winners, buildPlayerStatLines(fighters, statsSnapshot));
 
         } else {
 
@@ -687,6 +696,25 @@ public class GameManager {
 
         bedAlive.clear();
 
+    }
+
+    private List<BackendClient.MatchPlayerStat> buildPlayerStatLines(Set<UUID> fighters, Map<UUID, int[]> snap) {
+        List<BackendClient.MatchPlayerStat> lines = new ArrayList<>();
+        for (UUID uuid : fighters) {
+            int[] s = snap.getOrDefault(uuid, new int[4]);
+            Player online = Bukkit.getPlayer(uuid);
+            String name = online != null ? online.getName() : Bukkit.getOfflinePlayer(uuid).getName();
+            if (name == null) name = uuid.toString().substring(0, 8);
+            lines.add(new BackendClient.MatchPlayerStat(
+                    uuid.toString(),
+                    name,
+                    s[0],
+                    s[1],
+                    s[2],
+                    s[3]
+            ));
+        }
+        return lines;
     }
 
 }

@@ -21,6 +21,7 @@ import { availableRewardPool } from '../solana/treasury.js';
 import { houseTransfer } from '../solana/custody.js';
 import { solToLamports } from '../util/money.js';
 import { clearBroadcastCamera, streamPublicView } from './broadcast.js';
+import { recordMatchPlayerStats, type MatchPlayerStatLine } from './playerStats.js';
 import {
   assignTeamsWithParties,
   partyAccept,
@@ -334,10 +335,12 @@ export async function reportResult(
   matchId: number,
   winningTeam: TeamColor,
   winnerUuids: string[],
+  playerStats: MatchPlayerStatLine[] = [],
 ): Promise<void> {
   const m = currentMatch();
   if (!m || m.id !== matchId || m.phase !== 'live') return;
   clearBroadcastCamera();
+  recordMatchPlayerStats(winnerUuids, playerStats);
   db.prepare("UPDATE matches SET phase = 'settling', winning_team = ? WHERE id = ?").run(winningTeam, matchId);
 
   // 1) Settle the parimutuel spectator pool (internal custodial credits).

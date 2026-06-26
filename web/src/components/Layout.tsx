@@ -33,6 +33,9 @@ export function Layout({
           <Link to="/guide" className={pathname === '/guide' ? 'nav-link active' : 'nav-link'}>
             Guide
           </Link>
+          <Link to="/sweatzone" className={pathname === '/sweatzone' ? 'nav-link active' : 'nav-link'}>
+            Sweatzone
+          </Link>
           <Link to="/play" className={pathname === '/play' ? 'nav-link active' : 'nav-link'}>
             Arena
           </Link>

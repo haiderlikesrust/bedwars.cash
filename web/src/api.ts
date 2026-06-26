@@ -52,6 +52,21 @@ export interface HouseResp {
 export interface Leaderboard {
   bettors: Array<{ name: string; netProfitSol: number }>;
   players: Array<{ name: string; wonSol: number }>;
+  killers: Array<{ name: string; kills: number; finalKills: number }>;
+  bedBreakers: Array<{ name: string; bedsBroken: number }>;
+  winners: Array<{ name: string; wins: number; matchesPlayed: number }>;
+}
+
+export interface SweatzonePlayer {
+  username: string;
+  wins: number;
+  kills: number;
+  bedsBroken: number;
+  solWon: number;
+}
+
+export interface SweatzoneResp {
+  players: SweatzonePlayer[];
 }
 
 // Ensure we have a session; create one (and a custodial deposit wallet) if needed.
@@ -64,6 +79,7 @@ export async function ensureSession(): Promise<void> {
 export const getMe = () => http<MeResp>('/api/me');
 export const getHouse = () => http<HouseResp>('/api/house');
 export const getLeaderboard = () => http<Leaderboard>('/api/leaderboard');
+export const getSweatzone = () => http<SweatzoneResp>('/api/sweatzone');
 export const createLinkCode = () => http<{ code: string }>('/api/link/code', { method: 'POST', body: '{}' });
 
 export const withdraw = (destination: string, amountSol: number) =>

@@ -136,7 +136,7 @@ async function handlePluginMessage(raw: string): Promise<void> {
       break;
     }
     case 'match_result':
-      await reportResult(msg.matchId, msg.winningTeam, msg.winnerUuids);
+      await reportResult(msg.matchId, msg.winningTeam, msg.winnerUuids, msg.playerStats ?? []);
       break;
     case 'match_aborted':
       abortMatch(msg.matchId, msg.reason);
