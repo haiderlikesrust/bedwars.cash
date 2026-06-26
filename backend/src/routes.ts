@@ -108,7 +108,7 @@ export function registerRoutes(app: FastifyInstance): void {
     availableRewardPoolSol: lamportsToSol(await availableRewardPool()),
   }));
 
-  app.get('/api/stats/:mcUuid', async (req) => {
+  app.get<{ Params: { mcUuid: string } }>('/api/stats/:mcUuid', async (req) => {
     const stats = getPlayerStats(req.params.mcUuid);
     if (!stats) return { stats: null };
     return { stats };
