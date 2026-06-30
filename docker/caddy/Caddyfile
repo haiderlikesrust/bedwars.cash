@@ -5,7 +5,17 @@
 # Main website
 {$DOMAIN} {
 	encode gzip
-	reverse_proxy web:80
+
+	# Live stream: proxy MediaMTX HLS same-origin under /bedwars/ so the player
+	# avoids cross-origin CORS + MediaMTX's HLS session-cookie check. Path is
+	# preserved (not stripped) so MediaMTX's internal redirects stay in-origin.
+	handle /bedwars/* {
+		reverse_proxy mediamtx:8888
+	}
+
+	handle {
+		reverse_proxy web:80
+	}
 }
 
 www.{$DOMAIN} {

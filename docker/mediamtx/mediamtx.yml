@@ -1,0 +1,17 @@
+# BedWars.cash media server (MediaMTX)
+#
+# Ingest: your capture box's OBS publishes RTMP to
+#   rtmp://<vps-ip-or-domain>:1935/bedwars
+# Output: low-latency HLS on :8888, which Caddy proxies SAME-ORIGIN at
+#   https://<domain>/bedwars/index.m3u8
+# Same-origin is what makes the website player work without CORS / cookie issues.
+#
+# Only keys we care about are set; MediaMTX fills the rest with sane defaults
+# (RTMP on :1935 and HLS on :8888 are enabled by default).
+
+hlsVariant: lowLatency
+hlsAllowOrigin: '*'
+
+# Only the broadcast path may be published. OBS stream key must be "bedwars".
+paths:
+  bedwars:
