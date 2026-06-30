@@ -18,6 +18,14 @@ export function Layout({
         <div className="cloud cloud-2" />
         <div className="cloud cloud-3" />
       </div>
+      <div className="motes" aria-hidden="true">
+        <span className="mote" />
+        <span className="mote" />
+        <span className="mote" />
+        <span className="mote" />
+        <span className="mote" />
+        <span className="mote" />
+      </div>
       <div className="terrain" aria-hidden="true" />
 
       <header className="topbar mc-panel">

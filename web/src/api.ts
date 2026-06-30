@@ -34,6 +34,31 @@ export interface SessionResp {
   depositAddress: string;
 }
 
+export interface Progression {
+  level: number;
+  xp: number;
+  xpIntoLevel: number;
+  xpForLevel: number;
+}
+
+export interface AchievementView {
+  id: string;
+  name: string;
+  description: string;
+  unlocked: boolean;
+  unlockedAt: number | null;
+}
+
+export interface QuestView {
+  id: string;
+  name: string;
+  description: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  xp: number;
+}
+
 export interface MeResp {
   userId: number;
   mcUsername: string | null;
@@ -41,6 +66,9 @@ export interface MeResp {
   depositAddress: string;
   balanceLamports: string;
   balanceSol: number;
+  progression: Progression | null;
+  achievements: AchievementView[];
+  quests: QuestView[];
 }
 
 export interface HouseResp {
@@ -59,6 +87,7 @@ export interface Leaderboard {
 
 export interface SweatzonePlayer {
   username: string;
+  level: number;
   wins: number;
   kills: number;
   bedsBroken: number;

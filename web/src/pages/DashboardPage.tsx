@@ -76,7 +76,7 @@ export function DashboardPage() {
               <p className="muted">Deposit devnet SOL to this address. It is credited automatically.</p>
               <div className="deposit">
                 <div className="qr">
-                  <QRCodeSVG value={me.depositAddress} size={132} bgColor="#2a2a2a" fgColor="#e8e0d0" />
+                  <QRCodeSVG value={me.depositAddress} size={132} bgColor="#0c0e16" fgColor="#eaf1fc" />
                 </div>
                 <code className="addr" title={me.depositAddress}>
                   {me.depositAddress}
@@ -91,6 +91,8 @@ export function DashboardPage() {
 
         <LinkCard me={me} onLinked={refreshMe} />
         <WithdrawCard onDone={refreshMe} />
+        <ProgressionCard me={me} />
+        <QuestsCard me={me} />
 
         <section className="card">
           <h2>Player reward pool</h2>
@@ -208,6 +210,101 @@ export function DashboardPage() {
         </section>
       </main>
     </Layout>
+  );
+}
+
+function QuestsCard({ me }: { me: MeResp | null }) {
+  return (
+    <section className="card quests-card">
+      <h2>Daily quests</h2>
+      {!me ? (
+        <p className="muted">Loading…</p>
+      ) : !me.linked || me.quests.length === 0 ? (
+        <p className="muted">
+          Link your Minecraft account to take on daily quests and earn XP. New challenges every day.
+        </p>
+      ) : (
+        <ul className="quest-list">
+          {me.quests.map((q) => {
+            const pct = q.target > 0 ? Math.min(100, (q.progress / q.target) * 100) : 0;
+            return (
+              <li key={q.id} className={`quest ${q.completed ? 'quest--done' : ''}`}>
+                <div className="quest-top">
+                  <span className="quest-name">
+                    {q.completed ? '✓ ' : ''}
+                    {q.description}
+                  </span>
+                  <span className="quest-xp">+{q.xp} XP</span>
+                </div>
+                <div className="quest-bar">
+                  <div className="quest-bar-fill" style={{ width: `${pct}%` }} />
+                </div>
+                <span className="quest-progress muted small">
+                  {Math.min(q.progress, q.target)} / {q.target}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function ProgressionCard({ me }: { me: MeResp | null }) {
+  return (
+    <section className="card progression-card">
+      <h2>Your progression</h2>
+      {!me ? (
+        <p className="muted">Loading…</p>
+      ) : !me.linked || !me.progression ? (
+        <p className="muted">
+          Link your Minecraft account to earn XP, level up, and unlock achievements by playing
+          matches.
+        </p>
+      ) : (
+        <>
+          <div className="prog-head">
+            <span className="prog-level">LVL {me.progression.level}</span>
+            <span className="muted small">
+              {me.progression.xpIntoLevel} / {me.progression.xpForLevel} XP to level{' '}
+              {me.progression.level + 1}
+            </span>
+          </div>
+          <div className="prog-bar">
+            <div
+              className="prog-bar-fill"
+              style={{
+                width: `${
+                  me.progression.xpForLevel > 0
+                    ? Math.min(100, (me.progression.xpIntoLevel / me.progression.xpForLevel) * 100)
+                    : 100
+                }%`,
+              }}
+            />
+          </div>
+
+          <h3>
+            Achievements{' '}
+            <span className="muted small">
+              {me.achievements.filter((a) => a.unlocked).length}/{me.achievements.length}
+            </span>
+          </h3>
+          <div className="ach-grid">
+            {me.achievements.map((a) => (
+              <div
+                key={a.id}
+                className={`ach ${a.unlocked ? 'ach--unlocked' : 'ach--locked'}`}
+                title={a.description}
+              >
+                <span className="ach-icon">{a.unlocked ? '★' : '🔒'}</span>
+                <span className="ach-name">{a.name}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 
