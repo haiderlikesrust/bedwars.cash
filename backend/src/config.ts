@@ -45,6 +45,15 @@ export const config = {
     maxBetSol: num('MAX_BET_SOL', 100),
   },
 
+  // XP awarded per match action; levels are derived from total XP (see services/progression.ts).
+  progression: {
+    xpKill: num('XP_KILL', 10),
+    xpFinalKill: num('XP_FINAL_KILL', 25),
+    xpBed: num('XP_BED', 40),
+    xpWin: num('XP_WIN', 100),
+    xpPlay: num('XP_PLAY', 20),
+  },
+
   antiAbuse: {
     minWalletAgeHours: num('MIN_WALLET_AGE_HOURS', 24),
     manualReviewThresholdSol: num('MANUAL_REVIEW_THRESHOLD_SOL', 5),

@@ -22,6 +22,8 @@ import { houseTransfer } from '../solana/custody.js';
 import { solToLamports } from '../util/money.js';
 import { clearBroadcastCamera, streamPublicView } from './broadcast.js';
 import { recordMatchPlayerStats, type MatchPlayerStatLine } from './playerStats.js';
+import { awardMatchProgression, getProgression } from './progression.js';
+import { applyMatchToQuests, getPlayerQuests } from './quests.js';
 import {
   assignTeamsWithParties,
   partyAccept,
@@ -341,6 +343,37 @@ export async function reportResult(
   if (!m || m.id !== matchId || m.phase !== 'live') return;
   clearBroadcastCamera();
   recordMatchPlayerStats(winnerUuids, playerStats);
+
+  // XP, levels and achievements (after stats are recorded so cumulative totals are current).
+  const progression = awardMatchProgression(winnerUuids, playerStats);
+  for (const r of progression) {
+    // Keep the plugin's cosmetic level cache in sync (badges, auras).
+    matchEvents.emit('progression', { mcUuid: r.mcUuid, level: r.level });
+    if (r.leveledUp) {
+      matchEvents.emit('notice', { mcUuid: r.mcUuid, message: `§b§lLEVEL UP! §r§bYou reached level ${r.level}.` });
+    }
+    for (const a of r.unlocked) {
+      matchEvents.emit('notice', { mcUuid: r.mcUuid, message: `§6§lACHIEVEMENT §r§eunlocked: ${a.name}!` });
+    }
+  }
+
+  // Daily quests: advance progress, award XP on completion, push updated state.
+  for (const line of playerStats) {
+    const won = winnerUuids.includes(line.mcUuid);
+    const done = applyMatchToQuests(line.mcUuid, line, won);
+    for (const q of done) {
+      matchEvents.emit('notice', {
+        mcUuid: line.mcUuid,
+        message: `§a§lQUEST §r§acomplete: ${q.name} §7(+${q.xp} XP)`,
+      });
+    }
+    if (done.length > 0) {
+      // Quest XP may have changed the level — re-sync the plugin's cosmetic cache.
+      matchEvents.emit('progression', { mcUuid: line.mcUuid, level: getProgression(line.mcUuid).level });
+    }
+    matchEvents.emit('quests', { mcUuid: line.mcUuid, quests: getPlayerQuests(line.mcUuid) });
+  }
+
   db.prepare("UPDATE matches SET phase = 'settling', winning_team = ? WHERE id = ?").run(winningTeam, matchId);
 
   // 1) Settle the parimutuel spectator pool (internal custodial credits).

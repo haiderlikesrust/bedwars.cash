@@ -133,6 +133,7 @@ export function combatLeaderboard(): {
 
 export interface SweatzoneEntry {
   username: string;
+  level: number;
   wins: number;
   kills: number;
   bedsBroken: number;
@@ -145,6 +146,7 @@ export function sweatzoneLeaderboard(limit = 50): SweatzoneEntry[] {
     .prepare(
       `SELECT
         ps.mc_username AS username,
+        COALESCE(prog.level, 1) AS level,
         ps.wins AS wins,
         ps.kills AS kills,
         ps.beds_broken AS bedsBroken,
@@ -162,11 +164,13 @@ export function sweatzoneLeaderboard(limit = 50): SweatzoneEntry[] {
         ) AS wonLamports
       FROM player_stats ps
       LEFT JOIN users u ON u.mc_uuid = ps.mc_uuid
+      LEFT JOIN player_progression prog ON prog.mc_uuid = ps.mc_uuid
       ORDER BY ps.wins DESC, ps.kills DESC, ps.beds_broken DESC, wonLamports DESC
       LIMIT ?`,
     )
     .all(limit) as Array<{
       username: string;
+      level: number;
       wins: number;
       kills: number;
       bedsBroken: number;
@@ -175,6 +179,7 @@ export function sweatzoneLeaderboard(limit = 50): SweatzoneEntry[] {
 
   return rows.map((r) => ({
     username: r.username,
+    level: r.level,
     wins: r.wins,
     kills: r.kills,
     bedsBroken: r.bedsBroken,

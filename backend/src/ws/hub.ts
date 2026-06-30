@@ -33,6 +33,8 @@ import {
   partyLeave,
   partyList,
 } from '../services/party.js';
+import { getProgression } from '../services/progression.js';
+import { getPlayerQuests } from '../services/quests.js';
 
 let pluginSocket: WebSocket | null = null;
 const webClients = new Set<WebSocket>();
@@ -63,6 +65,12 @@ matchEvents.on('state', (state) => {
 matchEvents.on('notice', (n) => {
   sendToPlugin({ type: 'notice', message: n.message, mcUuid: n.mcUuid });
   broadcastWeb({ kind: 'notice', message: n.message });
+});
+matchEvents.on('progression', (p: { mcUuid: string; level: number }) => {
+  sendToPlugin({ type: 'progression', mcUuid: p.mcUuid, level: p.level });
+});
+matchEvents.on('quests', (q: { mcUuid: string; quests: ReturnType<typeof getPlayerQuests> }) => {
+  sendToPlugin({ type: 'quests', mcUuid: q.mcUuid, quests: q.quests });
 });
 
 function sendJoinAction(
@@ -114,6 +122,9 @@ async function handlePluginMessage(raw: string): Promise<void> {
         queueCapacity: r.queueCapacity,
         phase: r.phase,
       });
+      // Seed the plugin's cosmetic level + daily quests for this player.
+      sendToPlugin({ type: 'progression', mcUuid: msg.mcUuid, level: getProgression(msg.mcUuid).level });
+      sendToPlugin({ type: 'quests', mcUuid: msg.mcUuid, quests: getPlayerQuests(msg.mcUuid) });
       break;
     }
     case 'queue_join': {
