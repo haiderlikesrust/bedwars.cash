@@ -54,9 +54,10 @@ public class CashScoreboard {
                 ? (plugin.game().isStarting() ? "§eSTARTING" : "§cLIVE")
                 : state.phaseLabel());
 
+        int lvl = plugin.cosmetics().level(p.getUniqueId());
         String[] lines = {
                 "§8§m─────────────",
-                "§7devnet",
+                "§7devnet §8· §fLevel §b" + lvl,
                 " ",
                 queueLine,
                 statusLine,

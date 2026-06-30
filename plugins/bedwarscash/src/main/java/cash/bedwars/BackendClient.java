@@ -168,8 +168,34 @@ public class BackendClient implements WebSocket.Listener {
                 }
             }
             case "join_action" -> handleJoinAction(msg);
+            case "progression" -> {
+                if (msg.has("mcUuid") && msg.has("level")) {
+                    plugin.cosmetics().setLevel(
+                            UUID.fromString(msg.get("mcUuid").getAsString()),
+                            msg.get("level").getAsInt());
+                }
+            }
+            case "quests" -> handleQuests(msg);
             default -> { /* ignore unknown */ }
         }
+    }
+
+    private void handleQuests(JsonObject msg) {
+        if (!msg.has("mcUuid") || !msg.has("quests")) return;
+        UUID uuid = UUID.fromString(msg.get("mcUuid").getAsString());
+        List<QuestBoard.Quest> list = new java.util.ArrayList<>();
+        for (JsonElement el : msg.getAsJsonArray("quests")) {
+            JsonObject q = el.getAsJsonObject();
+            list.add(new QuestBoard.Quest(
+                    q.get("id").getAsString(),
+                    q.get("name").getAsString(),
+                    q.get("description").getAsString(),
+                    q.get("target").getAsInt(),
+                    q.get("progress").getAsInt(),
+                    q.get("completed").getAsBoolean(),
+                    q.get("xp").getAsInt()));
+        }
+        plugin.quests().update(uuid, list);
     }
 
     private void handleJoinAction(JsonObject msg) {

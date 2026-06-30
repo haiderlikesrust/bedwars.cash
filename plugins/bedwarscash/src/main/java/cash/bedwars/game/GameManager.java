@@ -456,7 +456,8 @@ public class GameManager {
             TeamColor killerTeam = playerTeam.get(killer.getUniqueId());
             if (finalKill) stats.addFinalKill(killer.getUniqueId());
             else stats.addKill(killer.getUniqueId());
-            String msg = killerTeam.chat() + killer.getName() + " §7→ " + team.chat() + victim.getName();
+            String msg = plugin.cosmetics().badge(killer.getUniqueId()) + killerTeam.chat() + killer.getName()
+                    + " §7→ " + plugin.cosmetics().badge(victim.getUniqueId()) + team.chat() + victim.getName();
             if (finalKill) msg += " §c§lFINAL KILL!";
             Bukkit.broadcastMessage(msg);
             if (finalKill) {
@@ -471,7 +472,8 @@ public class GameManager {
                 killer.playSound(killer.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, 1f, 1f);
             }
         } else if (finalKill) {
-            Bukkit.broadcastMessage(team.chat() + victim.getName() + " §7was eliminated.");
+            Bukkit.broadcastMessage(plugin.cosmetics().badge(victim.getUniqueId()) + team.chat()
+                    + victim.getName() + " §7was eliminated.");
         }
 
         if (bedAlive.contains(team)) {
@@ -578,6 +580,7 @@ public class GameManager {
         if (winner != null) {
 
             Bukkit.broadcastMessage(winner.chat() + "§l" + winner.id() + " WINS!");
+            plugin.cosmetics().celebrateWin(winners, winner);
             UUID mvp = MatchStats.topKiller(statsSnapshot);
             if (mvp != null) {
                 int[] mvpStats = statsSnapshot.getOrDefault(mvp, new int[4]);
