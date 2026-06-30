@@ -117,4 +117,18 @@ export type PluginOutbound =
       queueCapacity?: number;
       phase?: MatchPhase;
     }
-  | { type: 'notice'; mcUuid?: string; message: string };
+  | { type: 'notice'; mcUuid?: string; message: string }
+  | { type: 'progression'; mcUuid: string; level: number }
+  | {
+      type: 'quests';
+      mcUuid: string;
+      quests: Array<{
+        id: string;
+        name: string;
+        description: string;
+        target: number;
+        progress: number;
+        completed: boolean;
+        xp: number;
+      }>;
+    };

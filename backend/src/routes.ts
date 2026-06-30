@@ -14,6 +14,8 @@ import { buildOdds, forceAbortCurrent, forceStartMatch, publicState } from './se
 import { ensureDepositWallet, houseAddress, houseBalanceLamports, houseTransfer } from './solana/custody.js';
 import { availableRewardPool, mockTopUp } from './solana/treasury.js';
 import { combatLeaderboard, getPlayerStats, sweatzoneLeaderboard } from './services/playerStats.js';
+import { getAchievements, getProgression } from './services/progression.js';
+import { getPlayerQuests } from './services/quests.js';
 import { pluginConnected } from './ws/hub.js';
 import { formatSol, lamportsToSol, solToLamports } from './util/money.js';
 
@@ -59,6 +61,9 @@ export function registerRoutes(app: FastifyInstance): void {
       depositAddress,
       balanceLamports: user.balanceLamports.toString(),
       balanceSol: lamportsToSol(user.balanceLamports),
+      progression: user.mcUuid ? getProgression(user.mcUuid) : null,
+      achievements: user.mcUuid ? getAchievements(user.mcUuid) : [],
+      quests: user.mcUuid ? getPlayerQuests(user.mcUuid) : [],
     };
   });
 
@@ -110,12 +115,20 @@ export function registerRoutes(app: FastifyInstance): void {
 
   app.get<{ Params: { mcUuid: string } }>('/api/stats/:mcUuid', async (req) => {
     const stats = getPlayerStats(req.params.mcUuid);
-    if (!stats) return { stats: null };
-    return { stats };
+    if (!stats) return { stats: null, progression: null, achievements: [] };
+    return {
+      stats,
+      progression: getProgression(req.params.mcUuid),
+      achievements: getAchievements(req.params.mcUuid),
+    };
   });
 
   app.get('/api/sweatzone', async () => ({
     players: sweatzoneLeaderboard(),
+  }));
+
+  app.get<{ Params: { mcUuid: string } }>('/api/quests/:mcUuid', async (req) => ({
+    quests: getPlayerQuests(req.params.mcUuid),
   }));
 
   app.get('/api/leaderboard', async () => {

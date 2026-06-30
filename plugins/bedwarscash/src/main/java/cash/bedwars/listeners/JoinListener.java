@@ -6,6 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 // Auto-queue on join (lobby phase) or spectator mode (live match).
 public class JoinListener implements Listener {
@@ -19,6 +20,8 @@ public class JoinListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onJoin(PlayerJoinEvent event) {
+        // Show a level badge right away; the backend refreshes it via a progression message.
+        plugin.cosmetics().applyTab(event.getPlayer());
         if (plugin.broadcast().shouldSkipJoinFlow(event.getPlayer())) {
             plugin.getServer().getScheduler().runTaskLater(
                     plugin,
@@ -34,5 +37,13 @@ public class JoinListener implements Listener {
                 () -> backend.playerJoin(event.getPlayer()),
                 delayTicks
         );
+    }
+
+    // Remove disconnecting players from the queue so the count never shows phantoms.
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onQuit(PlayerQuitEvent event) {
+        backend.queueLeave(event.getPlayer());
+        plugin.cosmetics().forget(event.getPlayer().getUniqueId());
+        plugin.quests().forget(event.getPlayer().getUniqueId());
     }
 }

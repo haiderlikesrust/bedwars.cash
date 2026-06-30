@@ -33,6 +33,8 @@ public class BedWarsCashPlugin extends JavaPlugin {
     private ShopService shop;
     private UpgradeShopService upgrades;
     private BroadcastDirector broadcast;
+    private Cosmetics cosmetics;
+    private QuestBoard quests;
 
     @Override
     public void onEnable() {
@@ -51,6 +53,8 @@ public class BedWarsCashPlugin extends JavaPlugin {
         this.game = new GameManager(this, worlds, lobby);
         this.shop = new ShopService(ShopCatalog.load(this), game);
         this.upgrades = new UpgradeShopService(UpgradeCatalog.load(this), game);
+        this.cosmetics = new Cosmetics(this);
+        this.quests = new QuestBoard();
 
         worlds.bootstrap();
         worlds.rebuildLobbyIfNeeded();
@@ -65,6 +69,7 @@ public class BedWarsCashPlugin extends JavaPlugin {
         this.backend.connect();
 
         scoreboard.startUpdater();
+        cosmetics.startAuraTask();
 
         getCommand("setwallet").setExecutor(new SetWalletCommand(backend));
         getCommand("bwlink").setExecutor(new LinkCommand(backend));
@@ -72,6 +77,7 @@ public class BedWarsCashPlugin extends JavaPlugin {
         getCommand("bets").setExecutor(new BetsCommand(oddsCache));
         getCommand("queue").setExecutor(new QueueCommand(backend));
         getCommand("party").setExecutor(new PartyCommand(backend));
+        getCommand("quests").setExecutor(new QuestsCommand(quests));
         getCommand("bwresult").setExecutor(new ResultCommand(backend, game));
         getCommand("bwc").setExecutor(new SetLobbyCommand(lobby, backend, game, liveState, worlds));
         getCommand("shop").setExecutor(new ShopCommand(game, shop));
@@ -105,4 +111,6 @@ public class BedWarsCashPlugin extends JavaPlugin {
     public ShopService shop() { return shop; }
     public UpgradeShopService upgrades() { return upgrades; }
     public BroadcastDirector broadcast() { return broadcast; }
+    public Cosmetics cosmetics() { return cosmetics; }
+    public QuestBoard quests() { return quests; }
 }

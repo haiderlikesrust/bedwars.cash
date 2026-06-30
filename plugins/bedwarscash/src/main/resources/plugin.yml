@@ -42,3 +42,6 @@ commands:
   party:
     description: Invite friends and queue on the same team.
     usage: /party <invite|accept|leave|list> [player]
+  quests:
+    description: View your daily quests and progress.
+    usage: /quests

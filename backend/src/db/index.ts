@@ -118,6 +118,29 @@ export function initSchema(): void {
       updated_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS player_progression (
+      mc_uuid TEXT PRIMARY KEY,
+      xp INTEGER NOT NULL DEFAULT 0,
+      level INTEGER NOT NULL DEFAULT 1,
+      updated_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS player_achievements (
+      mc_uuid TEXT NOT NULL,
+      achievement_id TEXT NOT NULL,
+      unlocked_at INTEGER NOT NULL,
+      PRIMARY KEY (mc_uuid, achievement_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS player_quests (
+      mc_uuid TEXT NOT NULL,
+      day TEXT NOT NULL,
+      quest_id TEXT NOT NULL,
+      progress INTEGER NOT NULL DEFAULT 0,
+      completed INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (mc_uuid, day, quest_id)
+    );
+
     CREATE TABLE IF NOT EXISTS kv (
       k TEXT PRIMARY KEY,
       v TEXT NOT NULL

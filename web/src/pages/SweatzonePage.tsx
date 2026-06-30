@@ -65,6 +65,9 @@ export function SweatzonePage() {
                     <th scope="col">#</th>
                     <th scope="col">Player</th>
                     <th scope="col" className="num">
+                      Lvl
+                    </th>
+                    <th scope="col" className="num">
                       Wins
                     </th>
                     <th scope="col" className="num">
@@ -83,6 +86,7 @@ export function SweatzonePage() {
                     <tr key={`${p.username}-${i}`}>
                       <td className="sweatzone-rank">{i + 1}</td>
                       <td className="sweatzone-player">{p.username}</td>
+                      <td className="num sweatzone-level">{p.level}</td>
                       <td className="num">{p.wins}</td>
                       <td className="num">{p.kills}</td>
                       <td className="num">{p.bedsBroken}</td>

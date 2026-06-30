@@ -91,6 +91,10 @@ describe('playerStats', () => {
   it('sweatzone ranks by wins and includes SOL won from rewards', () => {
     db.exec('DELETE FROM payouts');
     db.exec('DELETE FROM ledger');
+    // Clean only this fixture's own rows so the test is re-runnable against the shared dev DB
+    // (avoid a blanket DELETE FROM users, which would wipe real accounts).
+    db.prepare('DELETE FROM users WHERE mc_uuid = ?').run('uuid-a');
+    db.prepare('DELETE FROM player_progression WHERE mc_uuid = ?').run('uuid-a');
 
     const userInsert = db
       .prepare(

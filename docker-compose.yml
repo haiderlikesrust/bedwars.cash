@@ -93,6 +93,19 @@ services:
       backend:
         condition: service_healthy
 
+  # Live stream media server: RTMP ingest from the capture box -> low-latency HLS.
+  # HLS is not published directly; Caddy proxies it same-origin at /bedwars/.
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    restart: unless-stopped
+    volumes:
+      - ./docker/mediamtx/mediamtx.yml:/mediamtx.yml:ro
+    ports:
+      # RTMP ingest from your capture box's OBS. Firewall this to the capture box IP.
+      - "1935:1935"
+    expose:
+      - "8888"
+
 volumes:
   caddy_data:
   caddy_config:
