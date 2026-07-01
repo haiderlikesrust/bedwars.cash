@@ -141,6 +141,24 @@ export function initSchema(): void {
       PRIMARY KEY (mc_uuid, day, quest_id)
     );
 
+    CREATE TABLE IF NOT EXISTS admin_sessions (
+      token TEXT PRIMARY KEY,
+      csrf TEXT NOT NULL,
+      username TEXT NOT NULL,
+      created_at INTEGER NOT NULL,
+      last_seen INTEGER NOT NULL,
+      ip TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS admin_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
+      action TEXT NOT NULL,
+      details TEXT,
+      ip TEXT,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS kv (
       k TEXT PRIMARY KEY,
       v TEXT NOT NULL

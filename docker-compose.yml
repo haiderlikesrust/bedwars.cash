@@ -70,6 +70,8 @@ services:
       MIN_WALLET_AGE_HOURS: ${MIN_WALLET_AGE_HOURS:-24}
       MANUAL_REVIEW_THRESHOLD_SOL: ${MANUAL_REVIEW_THRESHOLD_SOL:-5}
       STREAM_URL: ${STREAM_URL:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
     volumes:
       - backend_data:/app/data
       - backend_wallets:/app/wallets
@@ -92,6 +94,18 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  # Admin panel (admin.bedwars.cash). Same-origin /api is proxied to the backend
+  # by Caddy; the subdomain is additionally gated with HTTP basic-auth.
+  admin:
+    build:
+      context: .
+      dockerfile: docker/admin/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${ADMIN_HOST_PORT:-8081}:80"
+    expose:
+      - "80"
 
   # Live stream media server: RTMP ingest from the capture box -> low-latency HLS.
   # HLS is not published directly; Caddy proxies it same-origin at /bedwars/.

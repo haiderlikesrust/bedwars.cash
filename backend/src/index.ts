@@ -1,11 +1,12 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
-import { config } from './config.js';
+import { config, adminEnabled } from './config.js';
 import { initSchema } from './db/index.js';
-import { ensureLobby } from './services/match.js';
+import { ensureLobby, purgeQueue } from './services/match.js';
 import { registerWs } from './ws/hub.js';
 import { registerRoutes } from './routes.js';
+import { registerAdminRoutes } from './routes/admin.js';
 import { houseAddress, houseBalanceLamports, scanDeposits } from './solana/custody.js';
 import { availableRewardPool } from './solana/treasury.js';
 import { lamportsToSol } from './util/money.js';
@@ -13,8 +14,13 @@ import { lamportsToSol } from './util/money.js';
 async function main() {
   initSchema();
   ensureLobby();
+  // Queue membership is ephemeral; drop anything left over from a previous run so
+  // disconnected players never linger as phantom queue slots.
+  purgeQueue();
 
   const app = Fastify({
+    // Behind Caddy/nginx: trust X-Forwarded-For so admin audit/rate-limit see real client IPs.
+    trustProxy: true,
     logger: {
       transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss', ignore: 'pid,hostname' } },
     },
@@ -24,6 +30,12 @@ async function main() {
   await app.register(websocket);
   registerWs(app);
   registerRoutes(app);
+  registerAdminRoutes(app);
+  if (adminEnabled()) {
+    app.log.info('Admin panel enabled (/api/admin/panel).');
+  } else {
+    app.log.warn('Admin panel DISABLED — set ADMIN_PASSWORD_HASH to enable it.');
+  }
 
   await app.listen({ port: config.port, host: '0.0.0.0' });
 

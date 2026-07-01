@@ -63,7 +63,21 @@ export const config = {
     // HLS (.m3u8), direct video URL, or embed page shown on the website during live matches.
     url: process.env.STREAM_URL?.trim() ?? '',
   },
+
+  // Admin panel (admin.bedwars.cash). Disabled unless ADMIN_PASSWORD_HASH is set.
+  // Generate the hash with: node scripts/admin-hash.mjs <password>
+  admin: {
+    username: str('ADMIN_USERNAME', 'admin'),
+    passwordHash: process.env.ADMIN_PASSWORD_HASH?.trim() ?? '',
+    sessionTtlMinutes: num('ADMIN_SESSION_TTL_MIN', 30),
+    maxLoginAttempts: num('ADMIN_MAX_LOGIN_ATTEMPTS', 5),
+    lockoutMinutes: num('ADMIN_LOCKOUT_MIN', 15),
+  },
 } as const;
+
+export function adminEnabled(): boolean {
+  return config.admin.passwordHash.length > 0;
+}
 
 export const TEAM_COLORS = ['GREEN', 'BLUE', 'RED', 'YELLOW'] as const;
 export type TeamColor = (typeof TEAM_COLORS)[number];

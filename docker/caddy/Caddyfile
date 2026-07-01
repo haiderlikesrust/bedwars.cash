@@ -27,3 +27,19 @@ server.{$DOMAIN} {
 	encode gzip
 	reverse_proxy backend:8787
 }
+
+# Admin panel — HTTP basic-auth gate at the edge, then the app's own login.
+# /api is proxied SAME-ORIGIN to the backend so the session cookie works.
+# Generate ADMIN_BASIC_HASH with:  docker run caddy caddy hash-password --plaintext '<pw>'
+admin.{$DOMAIN} {
+	encode gzip
+	basicauth {
+		{$ADMIN_BASIC_USER} {$ADMIN_BASIC_HASH}
+	}
+	handle /api/* {
+		reverse_proxy backend:8787
+	}
+	handle {
+		reverse_proxy admin:80
+	}
+}

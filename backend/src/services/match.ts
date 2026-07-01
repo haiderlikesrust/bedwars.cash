@@ -207,6 +207,15 @@ function clearQueue(): void {
   db.prepare('DELETE FROM queue').run();
 }
 
+// Admin/startup: drop every queued player (e.g. stale entries left after a restart)
+// and broadcast the fresh state. Returns how many were removed.
+export function purgeQueue(): number {
+  const n = (db.prepare('SELECT COUNT(*) AS c FROM queue').get() as { c: number }).c;
+  db.prepare('DELETE FROM queue').run();
+  broadcastState();
+  return n;
+}
+
 // ---- Betting ----
 function placedBets(matchId: number): SimpleBet[] {
   const rows = db
