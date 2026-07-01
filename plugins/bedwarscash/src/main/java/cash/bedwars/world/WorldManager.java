@@ -249,35 +249,57 @@ public class WorldManager {
     }
 
     private void buildLobby(World world) {
-        int radius = 28;
-        int y = 65;
+        int radius = 30;
+        int base = 65; // grass surface baseline
+        java.util.Random rng = new java.util.Random(20240607L);
+
         for (int x = -radius; x <= radius; x++) {
             for (int z = -radius; z <= radius; z++) {
                 double dist = Math.sqrt(x * x + z * z);
                 if (dist > radius) continue;
-                world.getBlockAt(x, y, z).setType(Material.LIGHT_GRAY_STAINED_GLASS);
-                world.getBlockAt(x, y - 1, z).setType(Material.BARRIER);
-                if (dist >= radius - 1) {
-                    for (int h = 1; h <= 3; h++) world.getBlockAt(x, y + h, z).setType(Material.BARRIER);
+                int surf = lobbySurfaceY(x, z, base);
+                world.getBlockAt(x, surf, z).setType(Material.GRASS_BLOCK);
+                world.getBlockAt(x, surf - 1, z).setType(Material.DIRT);
+                world.getBlockAt(x, surf - 2, z).setType(Material.DIRT);
+                world.getBlockAt(x, surf - 3, z).setType(Material.STONE);
+                // rounded underside so the hub floats like an island
+                int depth = 3 + (int) ((radius - dist) * 0.5);
+                for (int h = 4; h <= depth; h++) world.getBlockAt(x, surf - h, z).setType(Material.STONE);
+                // scattered flowers / grass away from the centre
+                if (dist > 7 && rng.nextInt(8) == 0) {
+                    Material deco = switch (rng.nextInt(6)) {
+                        case 0 -> Material.POPPY;
+                        case 1 -> Material.DANDELION;
+                        case 2 -> Material.CORNFLOWER;
+                        case 3 -> Material.AZURE_BLUET;
+                        case 4 -> Material.OXEYE_DAISY;
+                        default -> Material.SHORT_GRASS;
+                    };
+                    world.getBlockAt(x, surf + 1, z).setType(deco);
                 }
             }
         }
-        for (int x = -3; x <= 3; x++) {
-            for (int z = -3; z <= 3; z++) world.getBlockAt(x, y, z).setType(Material.QUARTZ_BLOCK);
+
+        // foundation marker used by isBuilt()
+        world.getBlockAt(0, base - 1, 0).setType(Material.EMERALD_BLOCK);
+
+        // trees scattered around the ring (kept clear of the hub + betting pads)
+        for (int i = 0; i < 18; i++) {
+            int tx = rng.nextInt(radius * 2 + 1) - radius;
+            int tz = rng.nextInt(radius * 2 + 1) - radius;
+            double d = Math.sqrt(tx * tx + tz * tz);
+            if (d < 10 || d > radius - 3 || nearLobbyPad(tx, tz)) continue;
+            buildLobbyTree(world, tx, lobbySurfaceY(tx, tz, base) + 1, tz, rng);
         }
-        world.getBlockAt(0, 64, 0).setType(Material.EMERALD_BLOCK);
-        world.getBlockAt(0, y + 1, 0).setType(Material.SEA_LANTERN);
 
-        placeTeamPad(world, TeamColor.GREEN, -18, y, -18);
-        placeTeamPad(world, TeamColor.BLUE, 18, y, -18);
-        placeTeamPad(world, TeamColor.RED, 18, y, 18);
-        placeTeamPad(world, TeamColor.YELLOW, -18, y, 18);
+        buildLobbyHub(world, base);
 
-        placeSign(world, 0, y + 1, -6, new String[]{
-                "§b§lBEDWARS.CASH", "§7Ranked queue", "§fJoin = auto-queue", "§ebedwars.cash"
-        });
+        placeLobbyPad(world, TeamColor.GREEN, -18, base, -18);
+        placeLobbyPad(world, TeamColor.BLUE, 18, base, -18);
+        placeLobbyPad(world, TeamColor.RED, 18, base, 18);
+        placeLobbyPad(world, TeamColor.YELLOW, -18, base, 18);
 
-        lobbySpawn = new Location(world, 0.5, y + 1, 0.5, 0f, 0f);
+        lobbySpawn = new Location(world, 0.5, base + 1, 0.5, 0f, 0f);
         world.setSpawnLocation(lobbySpawn);
         plugin.getConfig().set("lobby.world", LOBBY_WORLD);
         plugin.getConfig().set("lobby.x", lobbySpawn.getX());
@@ -286,11 +308,76 @@ public class WorldManager {
         plugin.saveConfig();
     }
 
-    private void placeTeamPad(World world, TeamColor team, int cx, int y, int cz) {
-        for (int x = cx - 2; x <= cx + 2; x++) {
-            for (int z = cz - 2; z <= cz + 2; z++) world.getBlockAt(x, y, z).setType(team.wool());
+    private int lobbySurfaceY(int x, int z, int base) {
+        double d = Math.sqrt(x * x + z * z);
+        if (d < 8) return base; // flat around the hub + spawn
+        double hills = 2.2 * Math.sin(x * 0.16) + 2.2 * Math.cos(z * 0.16) + 1.4 * Math.sin((x + z) * 0.09);
+        return base + Math.max(0, (int) Math.round(hills));
+    }
+
+    private boolean nearLobbyPad(int x, int z) {
+        int[][] pads = {{-18, -18}, {18, -18}, {18, 18}, {-18, 18}};
+        for (int[] p : pads) {
+            if (Math.abs(x - p[0]) <= 3 && Math.abs(z - p[1]) <= 3) return true;
         }
-        placeSign(world, cx, y + 1, cz, new String[]{
+        return false;
+    }
+
+    private void buildLobbyHub(World world, int base) {
+        // paved plaza around spawn
+        for (int x = -6; x <= 6; x++) {
+            for (int z = -6; z <= 6; z++) {
+                if (x * x + z * z > 40) continue;
+                boolean rim = x * x + z * z >= 26;
+                world.getBlockAt(x, base, z).setType(rim ? Material.CHISELED_STONE_BRICKS : Material.SMOOTH_STONE);
+                for (int h = 1; h <= 4; h++) world.getBlockAt(x, base + h, z).setType(Material.AIR);
+            }
+        }
+        // raised spawn dais
+        for (int x = -2; x <= 2; x++) {
+            for (int z = -2; z <= 2; z++) world.getBlockAt(x, base, z).setType(Material.QUARTZ_BLOCK);
+        }
+        world.getBlockAt(0, base, 0).setType(Material.SEA_LANTERN);
+        // corner pillars with lanterns
+        int[][] corners = {{-5, -5}, {5, -5}, {5, 5}, {-5, 5}};
+        for (int[] c : corners) {
+            for (int h = 1; h <= 3; h++) world.getBlockAt(c[0], base + h, c[1]).setType(Material.STONE_BRICKS);
+            world.getBlockAt(c[0], base + 4, c[1]).setType(Material.SEA_LANTERN);
+        }
+        placeSign(world, 0, base + 1, -5, new String[]{
+                "§b§lBEDWARS.CASH", "§7Ranked queue", "§fJoin = auto-queue", "§ebedwars.cash"
+        });
+    }
+
+    private void buildLobbyTree(World world, int x, int surf, int z, java.util.Random rng) {
+        boolean spruce = rng.nextBoolean();
+        Material log = spruce ? Material.SPRUCE_LOG : Material.OAK_LOG;
+        Material leaf = spruce ? Material.SPRUCE_LEAVES : Material.OAK_LEAVES;
+        int h = 4 + rng.nextInt(3);
+        for (int i = 0; i < h; i++) world.getBlockAt(x, surf + i, z).setType(log);
+        for (int dy = h - 2; dy <= h + 1; dy++) {
+            int r = dy >= h ? 1 : 2;
+            for (int dx = -r; dx <= r; dx++) {
+                for (int dz = -r; dz <= r; dz++) {
+                    if (dx * dx + dz * dz > r * r + 1) continue;
+                    if (dx == 0 && dz == 0 && dy < h) continue;
+                    Block b = world.getBlockAt(x + dx, surf + dy, z + dz);
+                    if (b.getType() == Material.AIR) b.setType(leaf);
+                }
+            }
+        }
+    }
+
+    private void placeLobbyPad(World world, TeamColor team, int cx, int base, int cz) {
+        int surf = lobbySurfaceY(cx, cz, base);
+        for (int x = cx - 2; x <= cx + 2; x++) {
+            for (int z = cz - 2; z <= cz + 2; z++) {
+                world.getBlockAt(x, surf, z).setType(team.wool());
+                world.getBlockAt(x, surf - 1, z).setType(Material.DIRT);
+                for (int y = surf + 1; y <= surf + 3; y++) world.getBlockAt(x, y, z).setType(Material.AIR);
+            }
+        }
+        placeSign(world, cx, surf + 1, cz, new String[]{
                 team.chat() + "§l" + team.id(), "§7Back this team", "§f/bet " + team.id().toLowerCase(), ""
         });
     }
@@ -327,10 +414,7 @@ public class WorldManager {
         buildMid(world, y);
         buildGlobalGenerators(world, y);
 
-        for (int x = -4; x <= 4; x++) {
-            for (int z = -4; z <= 4; z++) world.getBlockAt(x, y + 1, z).setType(Material.QUARTZ_BLOCK);
-        }
-        arenaWaitingSpawn = new Location(world, 0.5, y + 2, 0.5, 0f, 0f);
+        arenaWaitingSpawn = new Location(world, 0.5, y + 1, 0.5, 0f, 0f);
     }
 
     /** Reset a custom imported map between matches (keep terrain, restore beds). */
@@ -384,23 +468,36 @@ public class WorldManager {
     }
 
     private void buildBridges(World world, int y, int dist) {
-        for (int i = -8; i <= 8; i++) {
-            world.getBlockAt(i, y, -dist + 10).setType(Material.WHITE_WOOL);
-            world.getBlockAt(i, y, dist - 10).setType(Material.WHITE_WOOL);
-            world.getBlockAt(-dist + 10, y, i).setType(Material.WHITE_WOOL);
-            world.getBlockAt(dist - 10, y, i).setType(Material.WHITE_WOOL);
+        // 3-wide quartz walkways from mid out to each island along the axes
+        for (int i = 8; i <= dist - 8; i++) {
+            for (int w = -1; w <= 1; w++) {
+                Material mat = w == 0 ? Material.SMOOTH_QUARTZ : Material.QUARTZ_BLOCK;
+                world.getBlockAt(i, y, w).setType(mat);
+                world.getBlockAt(-i, y, w).setType(mat);
+                world.getBlockAt(w, y, i).setType(mat);
+                world.getBlockAt(w, y, -i).setType(mat);
+            }
         }
     }
 
     private void buildMid(World world, int y) {
-        for (int x = -6; x <= 6; x++) {
-            for (int z = -6; z <= 6; z++) {
-                if (Math.abs(x) <= 2 && Math.abs(z) <= 2) {
-                    world.getBlockAt(x, y, z).setType(Material.OBSIDIAN);
-                } else {
-                    world.getBlockAt(x, y, z).setType(Material.WHITE_WOOL);
-                }
+        for (int x = -7; x <= 7; x++) {
+            for (int z = -7; z <= 7; z++) {
+                double d = Math.sqrt(x * x + z * z);
+                if (d > 7.3) continue;
+                boolean ring = d > 5.5;
+                world.getBlockAt(x, y, z).setType(ring ? Material.CHISELED_QUARTZ_BLOCK : Material.SMOOTH_QUARTZ);
+                world.getBlockAt(x, y - 1, z).setType(Material.QUARTZ_BLOCK);
+                int depth = (int) ((7 - d) * 0.7);
+                for (int h = 2; h <= depth + 1; h++) world.getBlockAt(x, y - h, z).setType(Material.END_STONE);
+                world.getBlockAt(x, y - depth - 2, z).setType(Material.BEDROCK);
             }
+        }
+        // off-centre accent pillars (don't block the waiting spawn at 0,0)
+        int[][] pillars = {{-5, -5}, {5, -5}, {5, 5}, {-5, 5}};
+        for (int[] p : pillars) {
+            world.getBlockAt(p[0], y + 1, p[1]).setType(Material.QUARTZ_PILLAR);
+            world.getBlockAt(p[0], y + 2, p[1]).setType(Material.SEA_LANTERN);
         }
     }
 
@@ -415,51 +512,111 @@ public class WorldManager {
                 new Location(world, -12, y + 1, -12),
                 new Location(world, 12, y + 1, 12)
         );
-        for (Location loc : diamonds) world.getBlockAt(loc).setType(Material.DIAMOND_BLOCK);
-        for (Location loc : emeralds) world.getBlockAt(loc).setType(Material.EMERALD_BLOCK);
+        for (Location loc : diamonds) buildGenPedestal(world, loc, Material.DIAMOND_BLOCK, Material.LAPIS_BLOCK);
+        for (Location loc : emeralds) {
+            buildGenPlatform(world, loc, y); // emeralds sit off the axes — give them a small island
+            buildGenPedestal(world, loc, Material.EMERALD_BLOCK, Material.MOSS_BLOCK);
+        }
         globalGenerators.put(GeneratorType.DIAMOND, diamonds);
         globalGenerators.put(GeneratorType.EMERALD, emeralds);
     }
 
-    private void buildIsland(World world, TeamColor team, int cx, int y, int cz, BlockFace towardCenter) {
-        int r = 10;
-        for (int x = cx - r; x <= cx + r; x++) {
-            for (int z = cz - r; z <= cz + r; z++) {
-                if (Math.abs(x - cx) > r || Math.abs(z - cz) > r) continue;
-                world.getBlockAt(x, y - 1, z).setType(Material.BEDROCK);
-                world.getBlockAt(x, y, z).setType(team.wool());
-            }
-        }
-
-        BlockFace bedFacing = towardCenter;
-        int spawnOffset = 4;
-        int spawnX = cx + bedFacing.getModX() * spawnOffset;
-        int spawnZ = cz + bedFacing.getModZ() * spawnOffset;
-        float yaw = yawForFacing(bedFacing);
-        teamSpawns.put(team, new Location(world, spawnX + 0.5, y + 1, spawnZ + 0.5, yaw, 0f));
-
-        int bedX = cx - bedFacing.getModX() * 5;
-        int bedZ = cz - bedFacing.getModZ() * 5;
-        // Small bed room: one wool pedestal + single bed on top
+    private void buildGenPedestal(World world, Location gen, Material top, Material trim) {
+        int x = gen.getBlockX(), y = gen.getBlockY(), z = gen.getBlockZ();
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                world.getBlockAt(bedX + dx, y, bedZ + dz).setType(Material.BEDROCK);
-                world.getBlockAt(bedX + dx, y + 1, bedZ + dz).setType(Material.AIR);
-                world.getBlockAt(bedX + dx, y + 2, bedZ + dz).setType(Material.AIR);
+                world.getBlockAt(x + dx, y - 1, z + dz).setType((dx == 0 || dz == 0) ? trim : Material.STONE_BRICKS);
             }
         }
-        world.getBlockAt(bedX, y + 1, bedZ).setType(team.wool());
-        Location bedHead = placeBed(world, team, bedX, y + 1, bedZ, bedFacing);
+        world.getBlockAt(x, y - 1, z).setType(Material.CHISELED_STONE_BRICKS);
+        world.getBlockAt(x, y, z).setType(top); // the registered generator block
+    }
+
+    private void buildGenPlatform(World world, Location center, int y) {
+        int cx = center.getBlockX(), cz = center.getBlockZ();
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (dx * dx + dz * dz <= 5) world.getBlockAt(cx + dx, y, cz + dz).setType(Material.SMOOTH_QUARTZ);
+            }
+        }
+    }
+
+    private void buildIsland(World world, TeamColor team, int cx, int y, int cz, BlockFace towardCenter) {
+        int r = 9;
+        int mx = towardCenter.getModX();
+        int mz = towardCenter.getModZ();
+        for (int x = cx - r; x <= cx + r; x++) {
+            for (int z = cz - r; z <= cz + r; z++) {
+                double d = Math.sqrt((x - cx) * (x - cx) + (z - cz) * (z - cz));
+                if (d > r + 0.4) continue;
+                boolean accent = d > r - 2.5;
+                world.getBlockAt(x, y, z).setType(accent ? team.wool() : Material.SMOOTH_SANDSTONE);
+                world.getBlockAt(x, y - 1, z).setType(Material.SANDSTONE);
+                int depth = (int) ((r - d) * 0.8);
+                for (int h = 2; h <= depth + 1; h++) world.getBlockAt(x, y - h, z).setType(Material.END_STONE);
+                world.getBlockAt(x, y - depth - 2, z).setType(Material.BEDROCK);
+                // low rim wall for cover, with a doorway toward centre for the bridge
+                if (d >= r - 0.6) {
+                    int dot = (x - cx) * mx + (z - cz) * mz;
+                    int perp = (x - cx) * (-mz) + (z - cz) * mx;
+                    boolean opening = dot >= r - 1 && Math.abs(perp) <= 2;
+                    if (!opening) world.getBlockAt(x, y + 1, z).setType(Material.SANDSTONE_WALL);
+                }
+            }
+        }
+
+        int spawnOffset = 4;
+        int spawnX = cx + mx * spawnOffset;
+        int spawnZ = cz + mz * spawnOffset;
+        teamSpawns.put(team, new Location(world, spawnX + 0.5, y + 1, spawnZ + 0.5, yawForFacing(towardCenter), 0f));
+
+        int bedX = cx - mx * 5;
+        int bedZ = cz - mz * 5;
+        buildBedAlcove(world, team, bedX, bedZ, y, towardCenter);
+        Location bedHead = placeBed(world, team, bedX, y + 1, bedZ, towardCenter);
         teamBeds.put(team, bedHead);
 
         Location ironGen = new Location(world, cx + 3, y + 1, cz);
         Location goldGen = new Location(world, cx - 3, y + 1, cz);
-        world.getBlockAt(ironGen).setType(Material.IRON_BLOCK);
-        world.getBlockAt(goldGen).setType(Material.GOLD_BLOCK);
+        buildForge(world, ironGen, Material.IRON_BLOCK);
+        buildForge(world, goldGen, Material.GOLD_BLOCK);
         EnumMap<GeneratorType, Location> gens = new EnumMap<>(GeneratorType.class);
         gens.put(GeneratorType.IRON, ironGen);
         gens.put(GeneratorType.GOLD, goldGen);
         teamGenerators.put(team, gens);
+    }
+
+    private void buildBedAlcove(World world, TeamColor team, int bedX, int bedZ, int y, BlockFace facing) {
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                world.getBlockAt(bedX + dx, y, bedZ + dz).setType(Material.SMOOTH_SANDSTONE);
+                for (int h = 1; h <= 3; h++) world.getBlockAt(bedX + dx, y + h, bedZ + dz).setType(Material.AIR);
+            }
+        }
+        world.getBlockAt(bedX, y + 1, bedZ).setType(team.wool());
+        // three walls + slab roof; the opening faces the island interior (towards centre)
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                if (Math.abs(dx) != 2 && Math.abs(dz) != 2) continue;
+                if (facing.getModX() != 0 && dx == facing.getModX() * 2) continue;
+                if (facing.getModZ() != 0 && dz == facing.getModZ() * 2) continue;
+                for (int h = 1; h <= 2; h++) world.getBlockAt(bedX + dx, y + h, bedZ + dz).setType(team.wool());
+            }
+        }
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) world.getBlockAt(bedX + dx, y + 3, bedZ + dz).setType(Material.SANDSTONE_SLAB);
+        }
+    }
+
+    private void buildForge(World world, Location gen, Material top) {
+        int x = gen.getBlockX(), y = gen.getBlockY(), z = gen.getBlockZ();
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                if (dx != 0 || dz != 0) world.getBlockAt(x + dx, y - 1, z + dz).setType(Material.CHISELED_STONE_BRICKS);
+            }
+        }
+        world.getBlockAt(x, y - 1, z).setType(Material.STONE_BRICKS);
+        world.getBlockAt(x, y, z).setType(top); // registered generator block
     }
 
     private float yawForFacing(BlockFace face) {
@@ -613,22 +770,9 @@ public class WorldManager {
     }
 
     public void rebuildLobbyIfNeeded() {
-        if (customLobby) return;
-        World lobby = lobbyWorld();
-        if (lobby == null) return;
-        if (lobby.getBlockAt(27, 68, 0).getType() != Material.BARRIER) patchLobbyWalls(lobby);
-    }
-
-    private void patchLobbyWalls(World world) {
-        int radius = 28;
-        int y = 65;
-        for (int x = -radius; x <= radius; x++) {
-            for (int z = -radius; z <= radius; z++) {
-                double dist = Math.sqrt(x * x + z * z);
-                if (dist < radius - 1 || dist > radius) continue;
-                for (int h = 1; h <= 3; h++) world.getBlockAt(x, y + h, z).setType(Material.BARRIER);
-            }
-        }
+        // The grassy hub island is fully built when the lobby world is first created;
+        // there are no barrier walls to patch (players who fall are caught by the
+        // lobby containment check and teleported back to spawn).
     }
 
     public boolean isInsideLobbyPlatform(Location loc) {
@@ -638,7 +782,7 @@ public class WorldManager {
             return loc.getY() >= minY;
         }
         double dist = Math.sqrt(loc.getX() * loc.getX() + loc.getZ() * loc.getZ());
-        return loc.getY() >= 64 && loc.getY() <= 70 && dist <= 26;
+        return loc.getY() >= 55 && loc.getY() <= 95 && dist <= 34;
     }
 
     public boolean isLobbyWorld(World world) {
